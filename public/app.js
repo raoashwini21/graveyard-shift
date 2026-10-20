@@ -213,9 +213,12 @@
     if (Date.now() - knockAt > 900 && v) { knockAt = Date.now(); door.knock(); sfx.tick(); }
   });
 
-  $('reveals').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => `<li>
-    <span class="top-row"><span class="icon">${ICONS[t]}</span><span class="stamp" style="--ink:${KINDS[t].color}">${KINDS[t].stamp}</span></span>
-    <span class="name">${KINDS[t].name}</span><span class="kind">${cap(KINDS[t].many)}</span><span class="desc">${KINDS[t].meaning}</span><span class="epitaph">${KINDS[t].epitaph}</span></li>`).join('');
+  $('reveals').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => `<li class="kind-card" style="--accent:${KINDS[t].color}">
+    <span class="spirit sp-${t}" aria-hidden="true"><img src="art/spirit-${t}.webp" alt="" loading="lazy"></span>
+    <span class="kc-label">${cap(KINDS[t].many)}</span>
+    <span class="kc-name">${KINDS[t].name}</span>
+    <span class="kc-desc">${KINDS[t].meaning}</span>
+    <span class="kc-epitaph">${KINDS[t].epitaph}</span></li>`).join('');
   show('landing');
 
   // ---------- The séance (scan) ----------
@@ -367,7 +370,13 @@
     await wait(1600);
     const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
     const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
-    await Haunt.reveal({ count: leftNow, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip });
+    if (window.Yard && document.body.classList.contains('on-yard')) {
+      const byKind = ORDER.filter((t) => t !== 'locked').map((t) => [t, result.ghosts.filter((g) => g.type === t && !state.banished.has(g.id)).length]).filter(([, c]) => c);
+      sfx.hush();
+      await sleep(skip ? 0 : 700);
+      await Yard.reveal({ count: leftNow, kinds: byKind, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip,
+        plural: (t, c) => (c === undefined ? KINDS[t] : c === 1 ? KINDS[t].one : KINDS[t].many), sound: () => sfx.lit() });
+    } else await Haunt.reveal({ count: leftNow, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip });
     document.removeEventListener('click', onSkip);
     document.removeEventListener('keydown', onSkip);
     document.body.classList.remove('speaking');
@@ -660,90 +669,63 @@
   const loadImg = (svg) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
   $('share').onclick = async () => {
     const r = state.result;
-    try { await Promise.all(['400 72px "Pirata One"', '400 20px "Special Elite"', '500 20px Inter', '400 18px Inter'].map((f) => document.fonts.load(f))); } catch {}
+    const img = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+    try { await Promise.all(['620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px Inter', '400 18px Inter'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630, S = 2;
     const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
     const x = c.getContext('2d'); x.scale(S, S);
-    x.fillStyle = '#2b2531'; x.fillRect(0, 0, W, H);
-    // the hallway, shifted so its far door sits behind the count
-    const hallSvg = $('hall').innerHTML.replace('<svg ', '<svg width="1600" height="1000" ');
-    const hall = await loadImg(hallSvg);
-    if (hall) x.drawImage(hall, 925 - 800 * 0.9, 330 - 470 * 0.9, 1600 * 0.9, 1000 * 0.9);
+    const host = hostOf(r.site), left = aliveAll().length, s = scoreNow();
+    const kinds = ORDER.filter((t) => t !== 'locked' && alive(t).length).sort((a, b) => alive(b).length - alive(a).length).slice(0, 3);
+    const [bg, wisp, ...sp] = await Promise.all(['art/bg.webp', left ? 'art/ghost-idle.webp' : 'art/ghost-happy.webp', ...kinds.map((t) => `art/spirit-${t}.webp`)].map(img));
+    // the painted night, cropped so the manor and moon sit on the right
+    x.fillStyle = '#0b1029'; x.fillRect(0, 0, W, H);
+    if (bg) { const sc = Math.max(W / bg.width, H / bg.height) * 1.05; x.drawImage(bg, W - bg.width * sc + 40, (H - bg.height * sc) * 0.4, bg.width * sc, bg.height * sc); }
     const shade = x.createLinearGradient(0, 0, W, 0);
-    shade.addColorStop(0, 'rgba(20,16,22,.94)'); shade.addColorStop(.48, 'rgba(20,16,22,.78)'); shade.addColorStop(.68, 'rgba(20,16,22,.15)'); shade.addColorStop(1, 'rgba(20,16,22,.25)');
+    shade.addColorStop(0, 'rgba(8,12,34,.94)'); shade.addColorStop(.45, 'rgba(8,12,34,.82)'); shade.addColorStop(.72, 'rgba(8,12,34,.2)'); shade.addColorStop(1, 'rgba(8,12,34,.1)');
     x.fillStyle = shade; x.fillRect(0, 0, W, H);
-    const vig = x.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 820);
-    vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.55)');
-    x.fillStyle = vig; x.fillRect(0, 0, W, H);
-    const grain = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`);
-    if (grain) { x.globalAlpha = .06; x.drawImage(grain, 0, 0, W, H); x.globalAlpha = 1; }
-    // a figure standing in the hallway
-    const defsMk = document.getElementById('gs-specter')?.closest('defs')?.outerHTML;
-    if (defsMk) {
-      const fig = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 200 400">${defsMk}<use href="#gs-specter" width="200" height="400"/></svg>`);
-      if (fig) { x.save(); x.globalCompositeOperation = 'screen'; x.globalAlpha = .34; x.drawImage(fig, 1040, 150, 150, 300); x.restore(); }
+    const fade = x.createLinearGradient(0, H * 0.6, 0, H); fade.addColorStop(0, 'rgba(8,12,34,0)'); fade.addColorStop(1, 'rgba(8,12,34,.85)');
+    x.fillStyle = fade; x.fillRect(0, 0, W, H);
+    // Wisp and his lantern light
+    if (wisp) {
+      const gx = 870, gy = 300, g = x.createRadialGradient(gx, gy, 10, gx, gy, 260);
+      g.addColorStop(0, 'rgba(255,200,120,.35)'); g.addColorStop(1, 'rgba(255,200,120,0)');
+      x.fillStyle = g; x.fillRect(gx - 300, gy - 300, 600, 600);
+      x.save(); x.shadowColor = 'rgba(200,215,255,.35)'; x.shadowBlur = 40; x.drawImage(wisp, 760, 120, 400, 400); x.restore();
     }
-
-    const host = hostOf(r.site);
-    const left = aliveAll().length;
-    const s = scoreNow();
     x.textBaseline = 'alphabetic'; x.textAlign = 'left';
-    x.fillStyle = '#d9b77a'; x.font = '400 19px "Special Elite", monospace';
-    x.fillText('HAUNTED HOUSE INSPECTION', 80, 108);
-    x.fillStyle = '#f1e8d6';
-    let fs = 84; x.font = `400 ${fs}px "Pirata One", Georgia, serif`;
-    while (x.measureText(host).width > 560 && fs > 40) { fs -= 2; x.font = `400 ${fs}px "Pirata One", Georgia, serif`; }
-    x.fillText(host, 78, 190);
-    // the verdict, rubber-stamped
+    x.fillStyle = '#ffc46b'; x.font = '600 15px Inter, sans-serif';
+    x.fillText('GRAVEYARD SHIFT · WEBSITE CHECK', 72, 92);
+    x.fillStyle = '#f6efe1'; let fs = 60; x.font = `620 ${fs}px Fraunces, Georgia, serif`;
+    while (x.measureText(host).width > 560 && fs > 32) { fs -= 2; x.font = `620 ${fs}px Fraunces, Georgia, serif`; }
+    x.fillText(host, 70, 158);
+    // the headline: N ghosts found
+    x.font = 'italic 560 120px Fraunces, Georgia, serif'; x.fillStyle = '#ffc46b';
+    x.shadowColor = 'rgba(255,170,80,.45)'; x.shadowBlur = 40;
+    const num = left ? fmt(left) : 'No';
+    x.fillText(num, 66, 290); const nw = x.measureText(num).width; x.shadowBlur = 0;
+    x.font = '620 64px Fraunces, Georgia, serif'; x.fillStyle = '#f6efe1';
+    x.fillText(left === 1 ? 'ghost found' : 'ghosts found', 66 + nw + 22, 286);
+    // verdict pill
     const verdict = (left ? rankOf(s) : 'At peace').toUpperCase();
-    x.save(); x.translate(84, 214); x.rotate(-0.045);
-    x.font = '400 30px "Special Elite", monospace';
-    const vw = x.measureText(verdict).width + 34;
-    x.strokeStyle = left ? '#d9504f' : '#9cc7a9'; x.lineWidth = 3; x.strokeRect(0, 0, vw, 50);
-    x.lineWidth = 1; x.strokeRect(5, 5, vw - 10, 40);
-    x.fillStyle = left ? '#e2615e' : '#a6d1b3'; x.fillText(verdict, 17, 36); x.restore();
-    x.fillStyle = '#cfc4b4'; x.font = '400 18px Inter, sans-serif';
-    x.fillText(left ? `${fmt(left)} ghost${left === 1 ? '' : 's'} found in ${fmt(r.pagesScanned)} rooms` : `${fmt(r.pagesScanned)} rooms searched. Not one ghost.`, 80, 310);
-
-    const kinds = ORDER.filter((t) => t !== 'locked' && alive(t).length).sort((a, b) => alive(b).length - alive(a).length).slice(0, 4);
-    const maxN = Math.max(1, ...kinds.map((t) => alive(t).length));
+    x.font = '650 14px Inter, sans-serif'; const vw = x.measureText(verdict).width + 36;
+    x.fillStyle = left ? 'rgba(255,120,90,.14)' : 'rgba(156,199,169,.16)'; x.strokeStyle = left ? 'rgba(255,140,110,.5)' : 'rgba(156,199,169,.55)'; x.lineWidth = 1.2;
+    x.beginPath(); x.roundRect(70, 318, vw, 34, 17); x.fill(); x.stroke();
+    x.fillStyle = left ? '#ffb4a0' : '#a6d1b3'; x.fillText(verdict, 88, 340);
+    x.fillStyle = 'rgba(246,239,225,.7)'; x.font = '400 17px Inter, sans-serif';
+    x.fillText(`${fmt(r.pagesScanned)} pages and ${fmt(r.linksChecked)} links checked`, 70 + vw + 18, 341);
+    // the ghosts, with their spirits
     kinds.forEach((t, i) => {
-      const y = 368 + i * 44;
-      x.fillStyle = '#f1e8d6'; x.font = '500 16px Inter, sans-serif'; x.textAlign = 'left';
-      x.fillText(cap(KINDS[t].many), 80, y);
-      x.textAlign = 'right'; x.fillStyle = '#d9b77a'; x.font = '400 18px "Special Elite", monospace';
-      x.fillText(fmt(alive(t).length), 540, y);
-      x.fillStyle = 'rgba(241,232,214,.14)'; x.fillRect(80, y + 12, 460, 1);
-      x.fillStyle = KINDS[t].color; x.fillRect(80, y + 11, 460 * (alive(t).length / maxN), 3);
+      const y = 392 + i * 66;
+      x.fillStyle = 'rgba(255,255,255,.06)'; x.beginPath(); x.roundRect(70, y, 470, 54, 27); x.fill();
+      if (sp[i]) x.drawImage(sp[i], 76, y - 6, 62, 62);
+      x.fillStyle = '#f6efe1'; x.font = '650 24px Fraunces, Georgia, serif'; x.fillText(fmt(alive(t).length), 150, y + 36);
+      const nwid = x.measureText(fmt(alive(t).length)).width;
+      x.fillStyle = 'rgba(246,239,225,.85)'; x.font = '500 17px Inter, sans-serif';
+      x.fillText(alive(t).length === 1 ? KINDS[t].one : KINDS[t].many, 150 + nwid + 14, y + 34);
     });
-
-    // the count, glowing in the far doorway
-    const cx = 925, cy = 300;
-    const glow = x.createRadialGradient(cx, cy, 10, cx, cy, 230);
-    glow.addColorStop(0, 'rgba(255,214,150,.42)'); glow.addColorStop(1, 'rgba(255,214,150,0)');
-    x.fillStyle = glow; x.fillRect(cx - 240, cy - 240, 480, 480);
-    x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.shadowColor = 'rgba(0,0,0,.7)'; x.shadowBlur = 24;
-    x.fillStyle = '#fff4dc'; x.font = '400 170px "Pirata One", Georgia, serif';
-    x.fillText(fmt(left), cx, cy - 6);
-    x.font = '400 26px "Special Elite", monospace'; x.fillStyle = '#f1e8d6';
-    x.fillText(left === 1 ? 'GHOST INSIDE' : 'GHOSTS INSIDE', cx, cy + 96);
-    x.shadowBlur = 0; x.shadowColor = 'transparent';
-
-    // brass corners and the seal line
-    x.strokeStyle = 'rgba(217,183,122,.6)'; x.lineWidth = 1.2;
-    [[28, 28, 1, 1], [W - 28, 28, -1, 1], [28, H - 28, 1, -1], [W - 28, H - 28, -1, -1]].forEach(([px, py, sx, sy]) => {
-      x.beginPath(); x.moveTo(px, py + 44 * sy); x.lineTo(px, py); x.lineTo(px + 44 * sx, py); x.stroke();
-      x.beginPath(); x.moveTo(px + 6 * sx, py + 22 * sy); x.lineTo(px + 6 * sx, py + 6 * sy); x.lineTo(px + 22 * sx, py + 6 * sy); x.stroke();
-    });
-    x.textBaseline = 'alphabetic';
-    x.textAlign = 'right'; x.fillStyle = 'rgba(217,183,122,.85)'; x.font = '400 14px "Special Elite", monospace';
-    x.fillText(`SEALED ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}`, W - 80, 64);
-    x.fillStyle = 'rgba(241,232,214,.14)'; x.fillRect(80, 548, W - 160, 1);
-    x.textAlign = 'left'; x.fillStyle = '#f1e8d6'; x.font = '400 30px "Pirata One", Georgia, serif';
-    x.fillText('Graveyard Shift', 80, 588);
-    x.textAlign = 'right'; x.fillStyle = '#a99d8d'; x.font = '400 15px Inter, sans-serif';
-    x.fillText('github.com/raoashwini21/graveyard-shift', W - 80, 586);
+    if (!left) { x.fillStyle = 'rgba(246,239,225,.8)'; x.font = 'italic 500 26px Fraunces, Georgia, serif'; x.fillText('Not a single dead link. Wisp is delighted.', 70, 440); }
+    x.fillStyle = 'rgba(246,239,225,.55)'; x.font = '500 15px Inter, sans-serif'; x.textAlign = 'right';
+    x.fillText(`Checked ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · github.com/raoashwini21/graveyard-shift`, W - 60, H - 36);
   c.toBlob((b) => b && download(b, `graveyard-shift-${host}.png`), 'image/png');
   };
 })();

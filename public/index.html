@@ -95,22 +95,42 @@
       </div>
     </section>
 
-    <section class="index-section" aria-labelledby="revealsTitle">
-      <div class="section-head">
-        <h2 id="revealsTitle">What lives in your walls</h2>
-        <p>Seven kinds of ghost. Each one costs you clicks, trust or rankings. Each one comes with a fix.</p>
+    <section class="kinds-section" aria-labelledby="revealsTitle">
+      <div class="kinds-head">
+        <p class="sec-kicker">The ghosts Wisp hunts</p>
+        <h2 id="revealsTitle">Seven things quietly haunting your site</h2>
+        <p>Each one costs you clicks, trust or search rankings. Every one Wisp finds comes with the page it's on and exactly how to fix it.</p>
       </div>
-      <ol class="reveals" id="reveals"></ol>
+      <ol class="kinds" id="reveals"></ol>
     </section>
 
-    <section class="watch-section" aria-labelledby="watchTitle">
-      <div>
+    <section class="watch" aria-labelledby="watchTitle">
+      <div class="watch-art" aria-hidden="true"><img src="art/ghost-search.webp" alt="" loading="lazy"></div>
+      <div class="watch-copy">
+        <p class="sec-kicker">Free weekly monitoring</p>
         <h2 id="watchTitle">Hire the night watchman</h2>
-        <p>Drop one file into any GitHub repo. Every Monday before dawn the watchman walks your site again. Nothing new, he stays quiet. A new ghost moves in, you get an email the same morning. Delete the file and he clocks off.</p>
+        <p>Wisp can check one website for you every week, on GitHub, for free. He only speaks up when something new breaks.</p>
+        <ol class="watch-steps">
+          <li><b>Add one file</b> to any GitHub repository, even a new empty one: <code>.github/workflows/haunt.yml</code></li>
+          <li><b>Paste this</b> and change <code>yoursite.com</code> to your website.</li>
+          <li><b>That's it.</b> Every Monday he walks your site. A new ghost? He opens a GitHub issue and you get the email. Nothing new? Silence. Delete the file to stop.</li>
+        </ol>
       </div>
-      <pre class="code"><code><span class="c-k">- uses:</span> raoashwini21/graveyard-shift@main
-  <span class="c-k">with:</span>
-    <span class="c-k">site:</span> yoursite.com</code></pre>
+      <pre class="code" aria-label="Workflow file"><code><span class="c-c"># .github/workflows/haunt.yml</span>
+<span class="c-k">name:</span> Weekly haunt
+<span class="c-k">on:</span>
+  <span class="c-k">schedule:</span>
+    - <span class="c-k">cron:</span> '17 3 * * 1'   <span class="c-c"># Mondays</span>
+  <span class="c-k">workflow_dispatch:</span>
+<span class="c-k">permissions:</span>
+  <span class="c-k">issues:</span> write
+<span class="c-k">jobs:</span>
+  <span class="c-k">haunt:</span>
+    <span class="c-k">runs-on:</span> ubuntu-latest
+    <span class="c-k">steps:</span>
+      - <span class="c-k">uses:</span> raoashwini21/graveyard-shift@main
+        <span class="c-k">with:</span>
+          <span class="c-k">site:</span> <span class="c-v">yoursite.com</span></code></pre>
     </section>
 
     <footer class="foot">

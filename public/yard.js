@@ -72,33 +72,73 @@ window.Yard = (() => {
     }
     return best;
   };
+  // Short words carved on the small stones, and the plain-language line for the big moment.
+  const CARVE = { dead: 'Dead', possessed: 'Taken', 'past-event': 'Over', 'stale-year': 'Stuck', nameless: 'No name', chain: 'Lost', speechless: 'Mute' };
+  const SAY = {
+    dead: 'A link that leads nowhere',
+    possessed: 'A link that lands on someone else\'s site',
+    'past-event': 'An event that already happened',
+    'stale-year': 'A copyright year stuck in the past',
+    nameless: 'A page with no title',
+    chain: 'A link that takes the long way round',
+    speechless: 'A page with no description',
+  };
+  const where = (path) => {
+    const p = (path || '').replace(/^https?:\/\//, '').replace(/^www\./, '');
+    if (!p || p === '/') return 'on your home page';
+    if (!p.startsWith('/')) return 'pointing to ' + p.split('/')[0];
+    return 'on ' + (p.length > 34 ? p.slice(0, 33) + '…' : p);
+  };
+  let lastBig = 0;
+  const bigQueue = [];
   const found = (kind, path, K) => {
     const spot = freeSpot(S.fx);
     const el = document.createElement('div');
     el.className = `tomb k-${kind}`;
     const v = (hash(path + kind) % VARIANTS) + 1;
     const carved = (path || '').replace(/^https?:\/\//, '');
-    el.innerHTML = `
+    const stone = (cls) => `
       <img class="tomb-spirit" src="art/spirit-${kind}.webp" alt="" onerror="this.remove()">
       <div class="tomb-stone">
         <img class="tomb-img" src="art/tomb-${v}.webp" alt="" onerror="this.parentNode.classList.add('no-art')">
-        <div class="tomb-carve v${v}"><b>${esc(K.stamp)}</b><span>${esc(carved.length > 22 ? carved.slice(0, 21) + '…' : carved)}</span></div>
-      </div>
-      <div class="tomb-dirt"></div>`;
+        <div class="tomb-carve v${v}"><i>R.I.P.</i><b>${esc(CARVE[kind] || 'Gone')}</b></div>
+      </div>${cls || ''}`;
+    el.innerHTML = stone('<div class="tomb-dirt"></div>');
     el.title = `${K.name}: ${carved}`;
     ground.appendChild(el);
     const t = { el, row: spot.row, fx: spot.fx, kind };
     tombs.push(t);
     positionTomb(t);
-    requestAnimationFrame(() => el.classList.add('risen'));
     setPose('point', 1500);
-    // the point pose faces right: turn him toward the new stone
     S.face = spot.fx >= S.fx ? 1 : -1;
     if (tombs.length > MAX_TOMBS) {
       const old = tombs.shift();
       old.el.classList.add('sinking');
       setTimeout(() => old.el.remove(), 1200);
     }
+    // The first ghost of each moment gets the full-screen tombstone; rapid ones just rise in place.
+    const now = Date.now();
+    if (still() || now - lastBig < 2600) { requestAnimationFrame(() => el.classList.add('risen')); return; }
+    lastBig = now;
+    el.classList.add('waiting');
+    const big = document.createElement('div');
+    big.className = `tomb-big k-${kind}`;
+    big.innerHTML = `<div class="tomb tomb-hero risen">${stone()}</div>
+      <p class="tomb-say"><b>${esc(SAY[kind] || K.one)}</b><span>${esc(where(path))}</span></p>`;
+    document.body.appendChild(big);
+    requestAnimationFrame(() => big.classList.add('on'));
+    setTimeout(() => {
+      // fly down into its place in the graveyard
+      const hero = big.querySelector('.tomb-hero');
+      const from = hero.getBoundingClientRect(), to = el.getBoundingClientRect();
+      big.classList.add('landing');
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2), sc = to.width / from.width;
+      hero.animate([{ transform: 'none' }, { transform: `translate(${dx}px, ${dy - 60}px) scale(${sc * 1.1})`, offset: 0.75 }, { transform: `translate(${dx}px, ${dy}px) scale(${sc})` }],
+        { duration: 700, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' }).finished.then(() => {
+        el.classList.remove('waiting'); el.classList.add('risen', 'landed');
+        big.remove();
+      }, () => big.remove());
+    }, 1500);
   };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -155,5 +195,48 @@ window.Yard = (() => {
     glow.style.opacity = calm ? 0.9 : (0.85 + Math.sin(t * 11) * 0.06 + Math.random() * 0.06).toFixed(3);
   };
   requestAnimationFrame(tick);
-  return { start, progress, page, found, finish, setLamps: (l) => { LAMPS = l; buildLamps(); } };
+  // ---------- The reveal: "N ghosts found", and every one of them flies at you ----------
+  const reveal = ({ count, kinds, verdict, host, skip, plural, sound }) => new Promise((resolve) => {
+    const box = document.createElement('div');
+    box.className = 'yard-reveal';
+    const badges = kinds.map(([k, n]) => `<li style="--accent:${plural(k).color}"><img src="art/spirit-${k}.webp" alt=""><b>${n}</b><span>${esc(plural(k, n))}</span></li>`).join('');
+    box.innerHTML = `<div class="yr-flight"></div>
+      <div class="yr-copy">
+        <p class="yr-host">${esc(host)}</p>
+        <h2 class="yr-title">${count ? `<em>${count}</em> ghost${count === 1 ? '' : 's'} found` : 'Not a single ghost'}</h2>
+        <p class="yr-verdict">${count ? esc(verdict) : 'The house is at peace'}</p>
+        ${count ? `<ul class="yr-kinds">${badges}</ul>` : '<img class="yr-happy" src="art/ghost-happy.webp" alt="">'}
+        <p class="yr-skip">Click anywhere to see the report</p>
+      </div>`;
+    document.body.appendChild(box);
+    const flight = box.querySelector('.yr-flight');
+    const pool = kinds.flatMap(([k, n]) => Array(Math.min(n, 6)).fill(k));
+    const fly = pool.slice(0, 16);
+    fly.forEach((k, i) => {
+      const img = document.createElement('img');
+      img.src = `art/spirit-${k}.webp`; img.alt = '';
+      flight.appendChild(img);
+      const sx = (Math.random() * 0.8 + 0.1) * innerWidth, sy = innerHeight * (0.72 + Math.random() * 0.2);
+      const ang = Math.random() * Math.PI * 2, ex = innerWidth / 2 + Math.cos(ang) * innerWidth * 0.75, ey = innerHeight / 2 + Math.sin(ang) * innerHeight * 0.75;
+      img.animate([
+        { transform: `translate(${sx}px, ${sy}px) translate(-50%, -50%) scale(.35)`, opacity: 0, filter: 'blur(2px)' },
+        { opacity: 1, filter: 'blur(0)', offset: 0.25 },
+        { transform: `translate(${innerWidth / 2 + (sx - innerWidth / 2) * 0.25}px, ${innerHeight * 0.52}px) translate(-50%, -50%) scale(1.6)`, opacity: 1, offset: 0.55 },
+        { transform: `translate(${ex}px, ${ey}px) translate(-50%, -50%) scale(6)`, opacity: 0, filter: 'blur(14px)' },
+      ], { duration: 1500 + Math.random() * 500, delay: 250 + i * 140, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' });
+    });
+    requestAnimationFrame(() => box.classList.add('on'));
+    if (sound) sound();
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      box.classList.add('leaving');
+      setTimeout(() => { box.remove(); resolve(); }, 650);
+    };
+    const t0 = Date.now();
+    const wait = () => { if (skip() || Date.now() - t0 > 5200 + fly.length * 60) finish(); else setTimeout(wait, 120); };
+    setTimeout(wait, 900);
+    box.addEventListener('click', finish);
+  });
+  return { start, progress, page, found, finish, reveal, setLamps: (l) => { LAMPS = l; buildLamps(); } };
 })();

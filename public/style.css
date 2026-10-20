@@ -716,10 +716,54 @@ body.on-yard .nav-btn { color: rgba(246,239,225,.62); }
 .tomb.risen .tomb-stone { transform: none; clip-path: inset(-50% -20% -10% -20%); }
 .tomb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 14px rgba(0,0,0,.45)); }
 .tomb-stone.no-art { background: linear-gradient(#59616f, #343a46); border-radius: 46% 46% 6px 6px / 30% 30% 6px 6px; inset: 18% 22% 6% 22%; }
-.tomb-carve { position: absolute; left: 25%; right: 25%; top: 46%; display: grid; gap: 5px; text-align: center; color: #3a3128;
-  text-shadow: 0 1px 0 rgba(255,246,225,.45), 0 -1px 0 rgba(0,0,0,.35); }
-.tomb-carve b { font: 750 calc(var(--ts, 120px) * .082)/1 var(--story); letter-spacing: .04em; text-transform: uppercase; font-variation-settings: 'opsz' 9; }
-.tomb-carve span { font: 650 calc(var(--ts, 120px) * .068)/1.15 var(--sans); word-break: break-all; }
+.tomb-carve { position: absolute; left: 22%; right: 22%; top: 47%; display: grid; gap: calc(var(--ts, 120px) * .02); text-align: center; color: #3b3229;
+  text-shadow: 0 1px 0 rgba(255,246,225,.5), 0 -1px 0 rgba(0,0,0,.35); }
+.tomb-carve i { font: italic 600 calc(var(--ts, 120px) * .07)/1 var(--story); letter-spacing: .12em; opacity: .8; }
+.tomb-carve b { font: 760 calc(var(--ts, 120px) * .115)/1 var(--story); letter-spacing: .02em; text-transform: uppercase; font-variation-settings: 'opsz' 24; }
+.tomb.waiting { visibility: hidden; }
+.tomb.landed .tomb-stone { animation: land .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes land { 0% { transform: scale(1.06, .92); } 60% { transform: scale(.98, 1.03); } 100% { transform: none; } }
+.tomb.landed .tomb-dirt { animation: dirt 1s ease-out; }
+
+.tomb-big { position: fixed; inset: 0; z-index: 30; display: grid; place-content: center; justify-items: center; gap: 18px; pointer-events: none; }
+.tomb-big::before { content: ''; position: absolute; inset: 0; background: radial-gradient(60% 60% at 50% 50%, rgba(5,8,24,.55), rgba(5,8,24,.8)); opacity: 0; transition: opacity .4s; }
+.tomb-big.on::before { opacity: 1; }
+.tomb-big.landing::before { opacity: 0; transition-duration: .5s; }
+.tomb-hero { position: relative; width: min(340px, 64vw); --ts: min(340px, 64vw); transform: translateY(40vh) scale(.4); opacity: 0; }
+.tomb-big.on .tomb-hero { animation: bigrise .75s cubic-bezier(.2,1.3,.4,1) forwards; }
+@keyframes bigrise { 0% { transform: translateY(40vh) scale(.4); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+.tomb-hero .tomb-stone { transform: none; clip-path: none; transition: none; }
+.tomb-hero .tomb-spirit { opacity: 1; transform: translate(-50%, 0) scale(1); transition: none; animation: spirit-up .9s .2s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes spirit-up { from { transform: translate(-50%, 50%) scale(.5); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
+.tomb-say { position: relative; margin: 0; text-align: center; opacity: 0; transform: translateY(10px); transition: opacity .4s .35s, transform .4s .35s; }
+.tomb-big.on .tomb-say { opacity: 1; transform: none; }
+.tomb-big.landing .tomb-say { opacity: 0; transition-delay: 0s; transition-duration: .2s; }
+.tomb-say b { display: block; font: 620 clamp(24px, 2.6vw, 34px)/1.15 var(--story); font-variation-settings: 'SOFT' 100, 'opsz' 72; color: var(--cream); text-shadow: 0 2px 20px rgba(0,0,0,.7); }
+.tomb-say span { display: block; margin-top: 6px; font: 500 15px/1.4 var(--sans); color: rgba(246,239,225,.7); }
+.scan .whisper { display: none; }
+
+.yard-reveal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: radial-gradient(80% 70% at 50% 45%, rgba(10,14,38,.82), rgba(4,6,18,.96)); opacity: 0; transition: opacity .5s; cursor: pointer; }
+.yard-reveal.on { opacity: 1; }
+.yard-reveal.leaving { opacity: 0; transition-duration: .6s; }
+.yr-flight { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.yr-flight img { position: absolute; left: 0; top: 0; width: 200px; filter: drop-shadow(0 0 24px rgba(210,225,255,.45)); will-change: transform, opacity; }
+.yr-copy { position: relative; z-index: 1; text-align: center; padding: 0 20px; }
+.yr-host { margin: 0 0 10px; font: 600 12px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: rgba(246,239,225,.6); opacity: 0; animation: yr-in .6s .2s both; }
+.yr-title { margin: 0; font: 620 clamp(3rem, 8vw, 7rem)/1 var(--story); font-variation-settings: 'SOFT' 100, 'opsz' 144; letter-spacing: -.03em; color: var(--cream); animation: yr-in .8s .5s both; }
+.yr-title em { font-style: italic; color: var(--amber); text-shadow: 0 0 60px rgba(255,170,80,.55); }
+.yr-verdict { display: inline-block; margin: 18px 0 0; padding: 7px 16px; border-radius: 999px; font: 600 13px var(--sans); letter-spacing: .14em; text-transform: uppercase;
+  color: #ffb4a0; background: rgba(255,120,90,.1); border: 1px solid rgba(255,140,110,.35); animation: yr-in .6s 1s both; }
+.yr-kinds { list-style: none; margin: 34px auto 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; max-width: 900px; }
+.yr-kinds li { display: flex; align-items: center; gap: 10px; padding: 8px 18px 8px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  font: 500 15px var(--sans); color: rgba(246,239,225,.85); animation: yr-pop .6s cubic-bezier(.3,1.6,.5,1) both; }
+.yr-kinds li:nth-child(1) { animation-delay: 1.5s; } .yr-kinds li:nth-child(2) { animation-delay: 1.62s; } .yr-kinds li:nth-child(3) { animation-delay: 1.74s; }
+.yr-kinds li:nth-child(4) { animation-delay: 1.86s; } .yr-kinds li:nth-child(5) { animation-delay: 1.98s; } .yr-kinds li:nth-child(6) { animation-delay: 2.1s; } .yr-kinds li:nth-child(7) { animation-delay: 2.22s; }
+.yr-kinds img { width: 52px; height: 52px; object-fit: contain; }
+.yr-kinds b { font: 650 22px var(--story); color: var(--cream); }
+.yr-happy { width: 260px; margin-top: 20px; animation: yr-pop .8s .8s cubic-bezier(.3,1.6,.5,1) both, sp-float 4s 1.6s ease-in-out infinite; }
+.yr-skip { margin: 34px 0 0; font: 500 13px var(--sans); color: rgba(246,239,225,.4); animation: yr-in .6s 2.6s both; }
+@keyframes yr-in { from { opacity: 0; transform: translateY(14px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes yr-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 .tomb-dirt { position: absolute; left: 10%; right: 10%; bottom: 0; height: 18%; border-radius: 50%; background: radial-gradient(closest-side, rgba(40,32,26,.75), transparent); opacity: 0; }
 .tomb.risen .tomb-dirt { animation: dirt 1.2s ease-out; }
 @keyframes dirt { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(-8px); } }
@@ -898,3 +942,42 @@ body.plain .spirit, body.plain .case-fx, body.plain::before { display: none !imp
   .spirit { width: 84px; height: 84px; margin: -6px 0 -6px -6px; }
   body.on-report .case-title h2 { font-size: 26px; }
 }
+
+/* ================= Landing: below the hero ================= */
+.sec-kicker { margin: 0 0 12px; font: 600 12px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--amber); }
+.kinds-section { position: relative; padding: 90px 0 40px; }
+.kinds-head { max-width: 640px; margin-bottom: 40px; }
+.kinds-head h2, .watch h2 { margin: 0; font-family: var(--story); font-weight: 620; font-size: clamp(2.1rem, 3.6vw, 3.2rem); line-height: 1.04; letter-spacing: -.02em;
+  font-variation-settings: 'SOFT' 100, 'opsz' 144; color: var(--cream); }
+.kinds-head p:last-child, .watch-copy > p:not(.sec-kicker) { margin: 16px 0 0; font: 400 17px/1.6 var(--sans); color: rgba(246,239,225,.72); }
+.kinds { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 18px; }
+.kind-card { position: relative; display: flex; flex-direction: column; padding: 18px 22px 24px; border-radius: 22px; overflow: hidden;
+  background: linear-gradient(170deg, color-mix(in srgb, var(--accent) 18%, rgba(14,19,48,.95)) 0%, rgba(12,16,40,.95) 55%); border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,.7); transition: transform .5s var(--ease), border-color .4s, box-shadow .5s; }
+.kind-card:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--accent) 50%, transparent); box-shadow: 0 40px 70px -30px rgba(0,0,0,.8), 0 0 60px -28px var(--accent); }
+.kind-card .spirit { width: 150px; height: 150px; margin: 0 auto 6px; cursor: default; }
+.kc-label { font: 600 11.5px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); filter: brightness(1.3); }
+.kc-name { margin-top: 6px; font: 620 26px/1.1 var(--story); font-variation-settings: 'SOFT' 100, 'opsz' 72; letter-spacing: -.01em; color: var(--cream); }
+.kc-desc { margin-top: 10px; font: 400 14.5px/1.55 var(--sans); color: rgba(246,239,225,.72); }
+.kc-epitaph { margin-top: auto; padding-top: 14px; font: italic 500 16px/1.4 var(--story); color: var(--amber); }
+
+.watch { position: relative; display: grid; grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr); gap: 34px; align-items: center; margin: 70px 0 60px; padding: 36px;
+  border-radius: 26px; background: linear-gradient(160deg, rgba(255,196,107,.08), rgba(12,16,40,.92) 40%); border: 1px solid rgba(255,255,255,.1); }
+.watch-art img { width: 170px; height: 170px; object-fit: contain; filter: drop-shadow(0 16px 24px rgba(0,0,0,.5)) drop-shadow(0 0 24px rgba(255,196,107,.25)); animation: sp-float 4s ease-in-out infinite; }
+.watch-steps { margin: 20px 0 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+.watch-steps li { counter-increment: s; position: relative; padding-left: 40px; font: 400 15px/1.55 var(--sans); color: rgba(246,239,225,.78); }
+.watch-steps li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font: 650 13px var(--sans); color: #2b1705; background: linear-gradient(180deg, #ffd893, #f3a24d); }
+.watch-steps b { color: var(--cream); font-weight: 600; }
+.watch-steps code, .watch-copy code { font: 500 13px ui-monospace, Menlo, monospace; color: var(--amber); background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 5px; }
+.watch .code { margin: 0; padding: 22px 24px; border-radius: 16px; background: rgba(6,9,26,.85); border: 1px solid rgba(255,255,255,.08); font: 12.5px/1.7 ui-monospace, Menlo, monospace; color: rgba(246,239,225,.82); overflow-x: auto; }
+.watch .c-k { color: #9fd0b4; } .watch .c-c { color: rgba(246,239,225,.4); } .watch .c-v { color: var(--amber); font-weight: 600; }
+body.on-landing .foot { border-top: 1px solid rgba(255,255,255,.08); color: rgba(246,239,225,.55); font: 400 14px var(--sans); padding: 26px 0 0; }
+body.on-landing .foot a { color: var(--cream); border-bottom-color: rgba(255,255,255,.25); }
+body.calm .watch-art img { animation: none; }
+body.plain .kinds-section .spirit, body.plain .watch-art { display: none; }
+body.plain .kind-card, body.plain .watch { background: #fff; border-color: #e4e0d8; box-shadow: none; }
+body.plain .kc-name, body.plain .kinds-head h2, body.plain .watch h2 { color: #1f1d1a; }
+body.plain .kc-desc, body.plain .kinds-head p, body.plain .watch-copy > p, body.plain .watch-steps li { color: #4b4740; }
+@media (max-width: 1000px) { .watch { grid-template-columns: 1fr; } .watch-art { display: none; } }
+@media (max-width: 600px) { .kinds-section { padding-top: 56px; } .watch { padding: 22px; } }
