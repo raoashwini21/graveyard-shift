@@ -6,6 +6,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 
 export const GHOST_TYPES = {
   dead: { name: 'Dead link', confidence: 'confirmed', weight: 10 },
+  possessed: { name: 'Possessed link', confidence: 'maybe', weight: 6 },
   chain: { name: 'Redirect chain', confidence: 'confirmed', weight: 4 },
   nameless: { name: 'Nameless page', confidence: 'confirmed', weight: 6 },
   speechless: { name: 'Speechless page', confidence: 'confirmed', weight: 3 },
@@ -49,6 +50,11 @@ export function describe(type, d = {}) {
       return {
         label: `Wanders through ${d.hops} hops to find its way home.`,
         fix: `Link straight to ${d.finalUrl}`,
+      };
+    case 'possessed':
+      return {
+        label: `Now possessed by another site: ${d.finalHost}.`,
+        fix: `It now lands on ${d.finalUrl}. Check that still makes sense, or update the link.`,
       };
     case 'nameless':
       return {
@@ -99,7 +105,7 @@ export function scoreGhosts(ghosts) {
   return { score, rank };
 }
 
-const ORDER = ['dead', 'past-event', 'stale-year', 'nameless', 'chain', 'speechless', 'locked'];
+const ORDER = ['dead', 'possessed', 'past-event', 'stale-year', 'nameless', 'chain', 'speechless', 'locked'];
 export function sortGhosts(ghosts) {
   return ghosts.sort((a, b) =>
     ORDER.indexOf(a.type) - ORDER.indexOf(b.type) || b.foundOn.length - a.foundOn.length);

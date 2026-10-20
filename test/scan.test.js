@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startFixtureSite } from './fixture-site.js';
-import { scan, classifyLink, isMalformed } from '../src/scan.js';
+import { scan, classifyLink, isMalformed, baseDomain, meaningfulHops } from '../src/scan.js';
 import { toText } from '../src/report.js';
 import { parseRobots } from '../src/robots.js';
 
@@ -115,4 +115,26 @@ test('locked doors are summarised by site in the text report', () => {
   assert.match(text, /g2\.com \(3\)/);
   assert.equal(text.includes('https://www.g2.com/p/1'), false);
   assert.ok(toText(fake, { showLocked: true }).includes('https://www.g2.com/p/1'));
+});
+
+test('other sites: trivial http/www/slash hops and login walls are not ghosts', () => {
+  const copyai = { status: 200, hops: [{ url: 'http://copy.ai/', status: 301 }, { url: 'https://copy.ai/', status: 301 }], finalUrl: 'https://www.copy.ai/' };
+  assert.equal(meaningfulHops('http://copy.ai/', copyai), 0);
+  assert.equal(classifyLink(copyai, 'http://copy.ai/', [], false), null);
+  const login = { status: 200, hops: [{ url: 'https://www.autoklose.com/', status: 302 }, { url: 'https://autoklose.com/', status: 302 }], finalUrl: 'https://app.autoklose.com/login' };
+  assert.equal(classifyLink(login, 'https://www.autoklose.com/', [], false), null);
+  const gsheet = { status: 200, hops: [{ url: 'a', status: 302 }, { url: 'b', status: 302 }], finalUrl: 'https://accounts.google.com/v3/signin/identifier?x=1' };
+  assert.equal(classifyLink(gsheet, 'https://docs.google.com/spreadsheets/create', [], false), null);
+  // the same trivial chain on your own site is still yours to fix
+  assert.equal(classifyLink(copyai, 'http://copy.ai/', [], true).type, 'chain');
+});
+
+test('a link that now lands on a different company is possessed', () => {
+  const census = { status: 200, hops: [{ url: 'https://getcensus.com/', status: 301 }], finalUrl: 'https://www.fivetran.com/' };
+  const g = classifyLink(census, 'https://getcensus.com/', [], false);
+  assert.equal(g.type, 'possessed');
+  assert.equal(g.data.finalHost, 'fivetran.com');
+  const store = { status: 200, hops: [{ url: 'x', status: 301 }], finalUrl: 'https://chromewebstore.google.com/detail/a' };
+  assert.equal(classifyLink(store, 'https://chrome.google.com/webstore/detail/a', [], false), null);
+  assert.equal(baseDomain('https://shop.example.co.uk/x'), 'example.co.uk');
 });

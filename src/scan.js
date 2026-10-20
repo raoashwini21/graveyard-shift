@@ -210,7 +210,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     if (!r) { r = await f.follow(url); linkResults.set(url, r); }
     checked++;
     emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
-    const g = classifyLink(r, url, opts.botShy);
+    const g = classifyLink(r, url, opts.botShy, sameSite(url));
     if (g) addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
   });
 
@@ -257,7 +257,7 @@ const hostMatches = (url, domains) => {
   } catch { return false; }
 };
 
-export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy) {
+export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy, internal = true) {
   if (['blocked', 'bad-url', 'unsupported'].includes(r.error)) return null;
   const hops = r.hops?.length || 0;
   const detail = { status: r.status ?? null, hops: r.hops || [], finalUrl: r.finalUrl, error: r.error || null };
@@ -274,6 +274,52 @@ export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy) {
   if (r.status === 404 || r.status === 410) return { type: 'dead', data: { status: r.status }, detail };
   if (r.status >= 500) return { type: 'dead', data: { status: r.status }, detail };
   if (r.status >= 400 || r.status === 999) return { type: 'locked', detail: { ...detail, reason: `status ${r.status}` } };
-  if (hops >= 2) return { type: 'chain', data: { hops, finalUrl: r.finalUrl }, detail };
-  return null;
+  if (!hops) return null;
+  if (internal) {
+    // Your own site: every extra hop is yours to fix.
+    return hops >= 2 ? { type: 'chain', data: { hops, finalUrl: r.finalUrl }, detail } : null;
+  }
+  // Other sites: only flag what changes what a reader gets.
+  if (isAuthWall(r.finalUrl)) return null; // ends on a login page; linking there would be worse
+  const from = baseDomain(url);
+  const to = baseDomain(r.finalUrl);
+  if (from && to && from !== to) {
+    return { type: 'possessed', data: { finalHost: hostOf(r.finalUrl), finalUrl: r.finalUrl }, detail };
+  }
+  const real = meaningfulHops(url, r);
+  return real >= 2 ? { type: 'chain', data: { hops: real, finalUrl: r.finalUrl }, detail } : null;
+}
+
+const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } };
+
+// example.com from shop.example.com; handles two-part endings like co.uk roughly.
+export function baseDomain(url) {
+  const host = hostOf(url);
+  if (!host || /^[\d.]+$/.test(host) || !host.includes('.')) return host;
+  const parts = host.split('.');
+  const last2 = parts.slice(-2);
+  if (parts.length >= 3 && last2[1].length === 2 && last2[0].length <= 3) return parts.slice(-3).join('.');
+  return last2.join('.');
+}
+
+const AUTH = /(^|[./])(login|signin|sign-in|log-in|auth|sso|oauth)([./?#-]|$)|accounts\.google\.com|\/session/i;
+export function isAuthWall(url) {
+  try {
+    const u = new URL(url);
+    return AUTH.test(u.hostname) || AUTH.test(u.pathname);
+  } catch { return false; }
+}
+
+// http→https, adding www and adding a trailing slash don't count as a real move.
+export function meaningfulHops(url, r) {
+  const key = (x) => {
+    try {
+      const u = new URL(x);
+      return u.hostname.replace(/^www\./, '') + u.pathname.replace(/\/+$/, '') + u.search;
+    } catch { return x; }
+  };
+  const seq = [url, ...(r.hops || []).slice(1).map((h) => h.url), r.finalUrl].map(key);
+  let n = 0;
+  for (let i = 1; i < seq.length; i++) if (seq[i] !== seq[i - 1]) n++;
+  return n;
 }

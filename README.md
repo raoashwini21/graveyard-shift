@@ -31,7 +31,8 @@ Your own links are always checked first.
 | Ghost | How it's found | Confidence |
 | --- | --- | --- |
 | Dead link | 404, 410, 5xx after a retry, or a broken address like `https://n/` | Confirmed |
-| Redirect chain | 2 or more hops, or a loop | Confirmed |
+| Possessed link | A link to another site that now lands on a different company (acquired, renamed, shut down) | Maybe |
+| Redirect chain | 2 or more hops on your own site, or 2 or more real moves on other sites (http→https and www don't count), or a loop | Confirmed |
 | Nameless page | Missing title | Confirmed |
 | Speechless page | Missing meta description | Confirmed |
 | Stale year | Copyright year older than this year | Confirmed in the footer, maybe elsewhere |

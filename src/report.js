@@ -1,7 +1,7 @@
 // Turn a scan result into something people read: terminal text, markdown
 // (also used for the weekly GitHub issue), CSV, and a diff between two scans.
 
-const ICON = { dead: '🪦', chain: '🌀', nameless: '👤', speechless: '🤐', 'stale-year': '🕰️', 'past-event': '🎃', locked: '🔒' };
+const ICON = { dead: '🪦', possessed: '👹', chain: '🌀', nameless: '👤', speechless: '🤐', 'stale-year': '🕰️', 'past-event': '🎃', locked: '🔒' };
 
 const short = (url) => {
   if (!url) return '';
@@ -23,7 +23,7 @@ export function diffScans(prev, cur) {
 export function byPage(ghosts) {
   const pages = new Map();
   for (const g of ghosts) {
-    const where = g.type === 'dead' || g.type === 'chain' || g.type === 'locked' ? g.foundOn : [g.url || g.foundOn[0]];
+    const where = ['dead', 'chain', 'locked', 'possessed'].includes(g.type) ? g.foundOn : [g.url || g.foundOn[0]];
     for (const p of where) {
       if (!pages.has(p)) pages.set(p, []);
       pages.get(p).push(g);
