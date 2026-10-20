@@ -1,4 +1,4 @@
-// Graveyard Shift — the ghosts themselves.
+// Graveyard Shift: the ghosts themselves.
 // Every ghost the scan finds becomes a spirit in the room: translucent, glowing, with a rippling hem,
 // blinking eyes that follow your cursor, and a character for each kind. They roam behind the content,
 // shy away from the pointer, swarm the count at the reveal, and leave when you banish them.

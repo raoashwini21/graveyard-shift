@@ -22,7 +22,7 @@ const ALREADY_PAST = /\b(recording|replay|watch (?:now|again|the recording|on[- 
 // Lines that are post metadata, not invitations.
 const META_LINE = /\b(published|posted|updated|last (?:modified|updated)|written)\b/i;
 
-const COPYRIGHT = /(?:©|\(c\)|copyright)\s*(?:©\s*)?((?:19|20)\d{2})(?:\s*(?:[-–—]|to)\s*((?:19|20)\d{2}))?/gi;
+const COPYRIGHT = /(?:©|\(c\)|copyright)\s*(?:©\s*)?((?:19|20)\d{2})(?:\s*(?:[-\u2013\u2014]|to)\s*((?:19|20)\d{2}))?/gi;
 
 const SKIP_HREF = /^(#|mailto:|tel:|sms:|javascript:|data:|about:)/i;
 

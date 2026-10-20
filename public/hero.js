@@ -1,4 +1,4 @@
-// Graveyard Shift — the landing hero and Wisp, the night-watch ghost.
+// Graveyard Shift: the landing hero and Wisp, the night-watch ghost.
 // Wisp is four painted poses (idle, peek, gasp, happy) moved by a spring, so every move has weight:
 // he leans into his motion, overshoots a little, settles, and bobs while he waits.
 // He reacts only to what you actually do: focus the address box and he peeks over it, type and he

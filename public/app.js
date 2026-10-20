@@ -1,4 +1,4 @@
-// Graveyard Shift — interface. Plain browser JavaScript, no build step.
+// Graveyard Shift: interface. Plain browser JavaScript, no build step.
 (() => {
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -242,7 +242,7 @@
   const statusClass = (s) => (s === 'room' ? 's-room' : typeof s === 'number' ? (s >= 400 ? 's-bad' : s >= 300 ? 's-move' : 's-ok') : s === 'loop' || s === 'broken' ? 's-bad' : 's-move');
   const log = (status, text) => {
     const li = document.createElement('li');
-    const label = status === 'room' ? 'room' : status === null || status === undefined ? '—' : String(status).slice(0, 6);
+    const label = status === 'room' ? 'room' : status === null || status === undefined ? '·' : String(status).slice(0, 6);
     li.innerHTML = `<span class="${statusClass(status)}">${esc(label)}</span><span>${esc(text)}</span>`;
     const list = $('log');
     list.prepend(li);
@@ -707,7 +707,7 @@
   $('share').onclick = async () => {
     const r = state.result;
     const img = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
-    try { await Promise.all(['620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px Inter', '400 18px Inter'].map((f) => document.fonts.load(f))); } catch {}
+    try { await Promise.all(['620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px "Bricolage Grotesque"', '400 18px "Bricolage Grotesque"'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630, S = 2;
     const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
     const x = c.getContext('2d'); x.scale(S, S);
@@ -730,38 +730,38 @@
       x.save(); x.shadowColor = 'rgba(200,215,255,.35)'; x.shadowBlur = 40; x.drawImage(wisp, 760, 120, 400, 400); x.restore();
     }
     x.textBaseline = 'alphabetic'; x.textAlign = 'left';
-    x.fillStyle = '#ffc46b'; x.font = '600 15px Inter, sans-serif';
+    x.fillStyle = '#ffc46b'; x.font = '600 15px "Bricolage Grotesque", sans-serif';
     x.fillText('GRAVEYARD SHIFT · WEBSITE CHECK', 72, 92);
-    x.fillStyle = '#f6efe1'; let fs = 60; x.font = `620 ${fs}px Fraunces, Georgia, serif`;
-    while (x.measureText(host).width > 560 && fs > 32) { fs -= 2; x.font = `620 ${fs}px Fraunces, Georgia, serif`; }
+    x.fillStyle = '#f6efe1'; let fs = 60; x.font = `620 ${fs}px Fraunces, serif`;
+    while (x.measureText(host).width > 560 && fs > 32) { fs -= 2; x.font = `620 ${fs}px Fraunces, serif`; }
     x.fillText(host, 70, 158);
     // the headline: N ghosts found
-    x.font = 'italic 560 120px Fraunces, Georgia, serif'; x.fillStyle = '#ffc46b';
+    x.font = 'italic 560 120px Fraunces, serif'; x.fillStyle = '#ffc46b';
     x.shadowColor = 'rgba(255,170,80,.45)'; x.shadowBlur = 40;
     const num = left ? fmt(left) : 'No';
     x.fillText(num, 66, 290); const nw = x.measureText(num).width; x.shadowBlur = 0;
-    x.font = '620 64px Fraunces, Georgia, serif'; x.fillStyle = '#f6efe1';
+    x.font = '620 64px Fraunces, serif'; x.fillStyle = '#f6efe1';
     x.fillText(left === 1 ? 'ghost found' : 'ghosts found', 66 + nw + 22, 286);
     // verdict pill
     const verdict = (left ? rankOf(s) : 'At peace').toUpperCase();
-    x.font = '650 14px Inter, sans-serif'; const vw = x.measureText(verdict).width + 36;
+    x.font = '650 14px "Bricolage Grotesque", sans-serif'; const vw = x.measureText(verdict).width + 36;
     x.fillStyle = left ? 'rgba(255,120,90,.14)' : 'rgba(156,199,169,.16)'; x.strokeStyle = left ? 'rgba(255,140,110,.5)' : 'rgba(156,199,169,.55)'; x.lineWidth = 1.2;
     x.beginPath(); x.roundRect(70, 318, vw, 34, 17); x.fill(); x.stroke();
     x.fillStyle = left ? '#ffb4a0' : '#a6d1b3'; x.fillText(verdict, 88, 340);
-    x.fillStyle = 'rgba(246,239,225,.7)'; x.font = '400 17px Inter, sans-serif';
+    x.fillStyle = 'rgba(246,239,225,.7)'; x.font = '400 17px "Bricolage Grotesque", sans-serif';
     x.fillText(`${fmt(r.pagesScanned)} pages and ${fmt(r.linksChecked)} links checked`, 70 + vw + 18, 341);
     // the ghosts, with their spirits
     kinds.forEach((t, i) => {
       const y = 392 + i * 66;
       x.fillStyle = 'rgba(255,255,255,.06)'; x.beginPath(); x.roundRect(70, y, 470, 54, 27); x.fill();
       if (sp[i]) x.drawImage(sp[i], 76, y - 6, 62, 62);
-      x.fillStyle = '#f6efe1'; x.font = '650 24px Fraunces, Georgia, serif'; x.fillText(fmt(alive(t).length), 150, y + 36);
+      x.fillStyle = '#f6efe1'; x.font = '650 24px Fraunces, serif'; x.fillText(fmt(alive(t).length), 150, y + 36);
       const nwid = x.measureText(fmt(alive(t).length)).width;
-      x.fillStyle = 'rgba(246,239,225,.85)'; x.font = '500 17px Inter, sans-serif';
+      x.fillStyle = 'rgba(246,239,225,.85)'; x.font = '500 17px "Bricolage Grotesque", sans-serif';
       x.fillText(alive(t).length === 1 ? KINDS[t].one : KINDS[t].many, 150 + nwid + 14, y + 34);
     });
-    if (!left) { x.fillStyle = 'rgba(246,239,225,.8)'; x.font = 'italic 500 26px Fraunces, Georgia, serif'; x.fillText('Not a single dead link. Wisp is delighted.', 70, 440); }
-    x.fillStyle = 'rgba(246,239,225,.55)'; x.font = '500 15px Inter, sans-serif'; x.textAlign = 'right';
+    if (!left) { x.fillStyle = 'rgba(246,239,225,.8)'; x.font = 'italic 500 26px Fraunces, serif'; x.fillText('Not a single dead link. Wisp is delighted.', 70, 440); }
+    x.fillStyle = 'rgba(246,239,225,.55)'; x.font = '500 15px "Bricolage Grotesque", sans-serif'; x.textAlign = 'right';
     x.fillText(`Checked ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} · github.com/raoashwini21/graveyard-shift`, W - 60, H - 36);
   c.toBlob((b) => b && download(b, `graveyard-shift-${host}.png`), 'image/png');
   };

@@ -1,4 +1,4 @@
-// Graveyard Shift — the haunted hallway backdrop and the door.
+// Graveyard Shift: the haunted hallway backdrop and the door.
 // The hallway is one illustrated SVG in one-point perspective: wallpapered walls lined with doors,
 // a runner down the floorboards, candle sconces, two portraits whose eyes follow you, and a far door
 // leaking light. Doors creak open on their own during the scan.

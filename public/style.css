@@ -1,18 +1,11 @@
-/* Graveyard Shift — the haunted hallway.
+/* Graveyard Shift: the haunted hallway.
    A moonlit mansion corridor sits behind everything: dusty mauve walls, candle sconces, doors that open
-   on their own. Content sits on frosted panels so it stays readable. Pirata One shouts, Special Elite
-   types up the evidence, Inter does the explaining. */
+   on their own. Content sits on frosted panels so it stays readable. Fraunces tells the story, Special Elite
+   types up the evidence, Bricolage Grotesque does the explaining. */
 
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; src: url(fonts/cormorant-400.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; src: url(fonts/cormorant-500.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; src: url(fonts/cormorant-600.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 400; font-style: italic; src: url(fonts/cormorant-400-italic.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 500; font-style: italic; src: url(fonts/cormorant-500-italic.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Cormorant Garamond'; font-weight: 600; font-style: italic; src: url(fonts/cormorant-600-italic.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Pirata One'; font-weight: 400; src: url(fonts/pirata.woff2) format('woff2'); font-display: swap; }
 @font-face { font-family: 'Special Elite'; font-weight: 400; src: url(fonts/elite.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'IM Fell'; font-style: italic; font-weight: 400; src: url(fonts/fell-italic.woff2) format('woff2'); font-display: swap; }
-@font-face { font-family: 'Inter'; font-weight: 100 900; src: url(fonts/inter.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Bricolage Grotesque'; font-weight: 200 800; src: url(fonts/bricolage.woff2) format('woff2'); font-display: swap; }
+@font-face { font-family: 'Spline Sans Mono'; font-weight: 300 700; src: url(fonts/spline-mono.woff2) format('woff2'); font-display: swap; }
 
 
 :root {
@@ -32,11 +25,11 @@
   --oxblood-text: #f08a80;
   --ecto: #a8ecd2;
   --sage: #9cc7a9;
-  --display: 'Pirata One', 'UnifrakturCook', Georgia, serif;
-  --type: 'Special Elite', 'Courier New', monospace;
-  --serif: 'IM Fell', 'Cormorant Garamond', Georgia, serif;
-  --sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --mono: 'Special Elite', ui-monospace, Menlo, monospace;
+  --display: 'Fraunces', serif;
+  --type: 'Special Elite', monospace;
+  --serif: 'Fraunces', serif;
+  --sans: 'Bricolage Grotesque', sans-serif;
+  --mono: 'Spline Sans Mono', monospace;
   --pad: clamp(20px, 4vw, 48px);
   --ease: cubic-bezier(.2, .7, .1, 1);
   --slow: cubic-bezier(.45, 0, .2, 1);
@@ -583,7 +576,7 @@ body.three .ghost-layer { mix-blend-mode: screen; filter: blur(.4px) drop-shadow
 /* ================= Landing hero: painted night, Wisp the night-watch ghost ================= */
 @font-face { font-family: 'Fraunces'; font-weight: 100 900; src: url(fonts/fraunces.woff2) format('woff2'); font-display: swap; }
 @font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 100 900; src: url(fonts/fraunces-italic.woff2) format('woff2'); font-display: swap; }
-:root { --night: #0b1029; --cream: #f6efe1; --amber: #ffc46b; --amber-2: #f2a14c; --story: 'Fraunces', 'Iowan Old Style', Georgia, serif; }
+:root { --night: #0b1029; --cream: #f6efe1; --amber: #ffc46b; --amber-2: #f2a14c; --story: 'Fraunces', serif; }
 body.on-landing { background: var(--night); }
 body.on-landing .chamber, body.on-landing .ghost-layer, body.on-landing .ghost-tip { display: none; }
 body.on-landing .top { position: absolute; top: 0; left: 0; right: 0; z-index: 20; }
@@ -795,7 +788,7 @@ body.on-yard .nav-btn { color: rgba(246,239,225,.62); }
 .scan .counters .presence dd { color: var(--amber); }
 .scan .evidence { min-width: 0; width: auto; max-height: none; background: none; border: 0; padding: 0; box-shadow: none; backdrop-filter: none; border-radius: 0; }
 .scan .evidence-title { font: 600 11.5px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 0 0 4px; }
-.scan .log { min-height: 66px; max-height: 66px; overflow: hidden; font: 12px/1.45 ui-monospace, Menlo, monospace; }
+.scan .log { min-height: 66px; max-height: 66px; overflow: hidden; font: 12px/1.45 'Spline Sans Mono', monospace; }
 .scan .log li { grid-template-columns: 52px 1fr; padding: 2px 0; border-bottom: 0; color: rgba(246,239,225,.5); }
 .scan .log li:first-child { color: var(--cream); }
 .scan .log li:nth-child(n+4) { display: none; }
@@ -804,7 +797,7 @@ body.on-yard .nav-btn { color: rgba(246,239,225,.62); }
 .hud-progress { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
 .scan .reading-now { display: flex; gap: 10px; align-items: baseline; background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
 .scan .rn-label { font: 600 11px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: rgba(246,239,225,.5); margin: 0; white-space: nowrap; }
-.scan .rn-url { font: 500 13px/1.4 ui-monospace, Menlo, monospace; color: var(--cream); }
+.scan .rn-url { font: 500 13px/1.4 'Spline Sans Mono', monospace; color: var(--cream); }
 .scan-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.1); overflow: hidden; }
 .scan-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #f3a24d, #ffd893); box-shadow: 0 0 12px rgba(255,196,107,.8); transition: width .6s var(--ease); }
 .scan .whisper { position: fixed; left: 50%; top: 46%; z-index: 9; transform: translateX(-50%); text-align: center; width: min(640px, 90vw); margin: 0; pointer-events: none;
@@ -859,7 +852,7 @@ body.on-report .case-epitaph { font: italic 500 17px/1.35 var(--story) !importan
 body.on-report .case-meaning { color: rgba(246,239,225,.72) !important; font-family: var(--sans); }
 body.on-report .records { position: relative; z-index: 1; }
 body.on-report .record { border-bottom-color: rgba(255,255,255,.07); }
-body.on-report .target { font: 500 14.5px/1.5 ui-monospace, Menlo, monospace; color: var(--cream); }
+body.on-report .target { font: 500 14.5px/1.5 'Spline Sans Mono', monospace; color: var(--cream); }
 body.on-report .target.quote { font: italic 500 20px/1.35 var(--story); }
 body.on-report .sub { color: rgba(246,239,225,.55); }
 body.on-report .sub .tag { color: rgba(246,239,225,.78); }
@@ -969,8 +962,8 @@ body.plain .spirit, body.plain .case-fx, body.plain::before { display: none !imp
 .watch-steps li::before { content: counter(s); position: absolute; left: 0; top: -1px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
   font: 650 13px var(--sans); color: #2b1705; background: linear-gradient(180deg, #ffd893, #f3a24d); }
 .watch-steps b { color: var(--cream); font-weight: 600; }
-.watch-steps code, .watch-copy code { font: 500 13px ui-monospace, Menlo, monospace; color: var(--amber); background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 5px; }
-.watch .code { margin: 0; padding: 22px 24px; border-radius: 16px; background: rgba(6,9,26,.85); border: 1px solid rgba(255,255,255,.08); font: 12.5px/1.7 ui-monospace, Menlo, monospace; color: rgba(246,239,225,.82); overflow-x: auto; }
+.watch-steps code, .watch-copy code { font: 500 13px 'Spline Sans Mono', monospace; color: var(--amber); background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 5px; }
+.watch .code { margin: 0; padding: 22px 24px; border-radius: 16px; background: rgba(6,9,26,.85); border: 1px solid rgba(255,255,255,.08); font: 12.5px/1.7 'Spline Sans Mono', monospace; color: rgba(246,239,225,.82); overflow-x: auto; }
 .watch .c-k { color: #9fd0b4; } .watch .c-c { color: rgba(246,239,225,.4); } .watch .c-v { color: var(--amber); font-weight: 600; }
 body.on-landing .foot { border-top: 1px solid rgba(255,255,255,.08); color: rgba(246,239,225,.55); font: 400 14px var(--sans); padding: 26px 0 0; }
 body.on-landing .foot a { color: var(--cream); border-bottom-color: rgba(255,255,255,.25); }
@@ -1018,3 +1011,4 @@ body.calm .claws g { animation: none; clip-path: none; }
 .patrol-bubble.on { animation: bubble 1.7s cubic-bezier(.3,1.6,.5,1) forwards; }
 @keyframes bubble { 0% { opacity: 0; transform: translateX(-50%) scale(.4) translateY(20px); } 18% { opacity: 1; transform: translateX(-50%) scale(1); } 82% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.9) translateY(-10px); } }
 body.calm .patrol-bubble.on { animation: none; opacity: 1; transform: translateX(-50%); }
+.code code, pre code { font: inherit; }

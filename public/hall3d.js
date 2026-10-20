@@ -1,4 +1,4 @@
-// Graveyard Shift — the hallway, rendered for real.
+// Graveyard Shift: the hallway, rendered for real.
 // A WebGL corridor in an old mansion: oak floorboards, damask wallpaper, panelled wainscot, candle sconces
 // whose flames flicker the light, moonlight falling through a window, drifting fog, dust, bloom and film grain.
 // The door at the end of the hall is the door the app talks to: it lines itself up with the invisible
@@ -365,8 +365,8 @@ function start() {
     speckle(g, w, h, 2500, 0.18); stains(g, w, h, 12, '70,40,10', 0.35);
     g.strokeStyle = 'rgba(70,44,14,.8)'; g.lineWidth = 6; g.strokeRect(14, 14, w - 28, h - 28);
     g.fillStyle = '#5a3b16'; for (const x of [40, w - 40]) { g.beginPath(); g.arc(x, h / 2, 9, 0, 7); g.fill(); }
-    let size = 84; g.font = `${size}px "Special Elite", "Courier New", monospace`;
-    while (g.measureText(plaqueText).width > w - 140 && size > 30) { size -= 4; g.font = `${size}px "Special Elite", "Courier New", monospace`; }
+    let size = 84; g.font = `${size}px "Special Elite", monospace`;
+    while (g.measureText(plaqueText).width > w - 140 && size > 30) { size -= 4; g.font = `${size}px "Special Elite", monospace`; }
     g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillStyle = 'rgba(255,240,200,.5)'; g.fillText(plaqueText, w / 2 + 1, h / 2 + 4);
     g.fillStyle = '#2b1a08'; g.fillText(plaqueText, w / 2, h / 2 + 2);

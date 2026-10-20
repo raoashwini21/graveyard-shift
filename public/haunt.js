@@ -1,4 +1,4 @@
-// Graveyard Shift — haunt events.
+// Graveyard Shift: haunt events.
 // A small scheduler for supernatural moments. Rules: one event at a time, cooldowns between them,
 // nothing covers text the user is reading, and everything is off with reduced motion or the plain report.
 window.Haunt = (() => {

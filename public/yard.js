@@ -1,4 +1,4 @@
-// Graveyard Shift — the scan as an actual graveyard shift.
+// Graveyard Shift: the scan as an actual graveyard shift.
 // Wisp patrols a moonlit cemetery with his lantern while the crawler runs. His position is the real crawl
 // progress, the lamps along the path light up as pages are checked, and every tombstone that rises is a
 // finding the scanner actually reported (the `presence` events), carved with its kind and the URL.
