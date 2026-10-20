@@ -75,7 +75,7 @@ test('robots.txt is respected', () => {
 
 test('score and rank', () => {
   assert.ok(result.score > 0);
-  assert.ok(['Restless', 'Haunted', 'Possessed', 'Cursed'].includes(result.rank));
+  assert.ok(['Restless', 'Haunted', 'Infested', 'Cursed'].includes(result.rank));
 });
 
 test('robots parser: longest match wins, allow beats disallow on a tie', () => {

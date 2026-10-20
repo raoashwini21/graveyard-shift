@@ -100,7 +100,7 @@ export function scoreGhosts(ghosts) {
   if (score === 0) rank = 'At peace';
   else if (score <= 20) rank = 'Restless';
   else if (score <= 50) rank = 'Haunted';
-  else if (score <= 100) rank = 'Possessed';
+  else if (score <= 100) rank = 'Infested';
   else rank = 'Cursed';
   return { score, rank };
 }

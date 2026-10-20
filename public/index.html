@@ -4,44 +4,93 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graveyard Shift</title>
-<style>
-  body { font-family: system-ui, sans-serif; background: #0d0f14; color: #d8dbe2; max-width: 760px; margin: 40px auto; padding: 0 16px; }
-  input { width: 70%; padding: 10px; background: #161a22; border: 1px solid #2a3040; color: inherit; border-radius: 6px; }
-  button { padding: 10px 16px; border-radius: 6px; border: 0; background: #e8a33d; color: #111; font-weight: 600; cursor: pointer; }
-  #log { color: #8a90a0; font-size: 14px; min-height: 1.4em; margin: 16px 0; }
-  .g { border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin: 10px 0; background: #12151c; }
-  .g b { color: #fff; } .g i { color: #c9b8ff; } .g small { color: #8a90a0; display: block; margin-top: 4px; }
-</style>
+<meta name="description" content="Find the ghosts on your website: dead links, possessed links, stale years and expired events.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪦</text></svg>">
 </head>
 <body>
-<h1>Graveyard Shift</h1>
-<p>Temporary page to test the scanner. The spooky UI replaces this on Wednesday.</p>
-<form id="f"><input id="u" placeholder="yoursite.com" required> <button>Scan</button></form>
-<div id="log"></div>
-<div id="out"></div>
-<script>
-const f = document.getElementById('f'), log = document.getElementById('log'), out = document.getElementById('out');
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-f.onsubmit = (e) => {
-  e.preventDefault();
-  out.innerHTML = ''; log.textContent = 'Lighting the lantern…';
-  const es = new EventSource('/api/scan?url=' + encodeURIComponent(document.getElementById('u').value));
-  es.addEventListener('progress', (m) => {
-    const d = JSON.parse(m.data);
-    if (d.type === 'phase') log.textContent = d.phase + '…';
-    if (d.type === 'page') log.textContent = 'Walking the halls · ' + d.pagesScanned + ' pages';
-    if (d.type === 'link') log.textContent = 'Knocking on doors · ' + d.linksChecked + '/' + d.linksTotal;
-  });
-  es.addEventListener('done', (m) => {
-    es.close();
-    const r = JSON.parse(m.data);
-    log.textContent = r.ghostCount ? r.ghostCount + (r.ghostCount === 1 ? ' GHOST' : ' GHOSTS') + ' FOUND · score ' + r.score + ' (' + r.rank + ')' : 'Your site is at peace.';
-    out.innerHTML = r.ghosts.map((g) => '<div class="g"><b>' + esc(g.name) + '</b> <i>' + esc(g.label) + '</i>' +
-      '<small>' + esc(g.quote ? '"' + g.quote + '"' : g.url) + '</small><small>Found on ' + esc(g.foundOn[0]) + (g.foundOn.length > 1 ? ' and ' + (g.foundOn.length - 1) + ' more' : '') + '</small><small>Fix: ' + esc(g.fix) + '</small></div>').join('');
-  });
-  es.addEventListener('fail', (m) => { es.close(); log.textContent = JSON.parse(m.data).message; });
-  es.onerror = () => { es.close(); if (!out.innerHTML) log.textContent = 'Lost the connection to the scanner.'; };
-};
-</script>
+<div class="fog" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<div class="wrap">
+  <header class="bar">
+    <a class="brand" href="/">Graveyard Shift</a>
+    <div class="toggles">
+      <button class="toggle" id="sound" aria-pressed="false">Sound off</button>
+      <button class="toggle" id="boring" aria-pressed="false">Boring mode</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="gate" id="gate">
+      <h1>Your website is haunted.</h1>
+      <p>Paste a site and we'll walk every page with a lantern, looking for dead links, links that now lead somewhere else, stale years and events that already ended.</p>
+      <form class="visit" id="visit">
+        <label class="sr-only" for="url">Website address</label>
+        <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" required>
+        <button class="lantern-btn" type="submit">Light the lantern</button>
+      </form>
+      <div class="options">
+        <label>Pages to walk
+          <select id="maxPages">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="external" checked> Check links to other sites</label>
+      </div>
+      <p class="error" id="error" role="alert"></p>
+    </section>
+
+    <section class="yard" id="yard" aria-live="polite">
+      <div class="yard-head">
+        <h2 id="yardTitle"></h2>
+        <p class="meta" id="yardMeta"></p>
+        <div class="boss" id="boss">
+          <div class="boss-top">
+            <span class="boss-name" id="bossName"></span>
+            <span class="boss-num" id="bossNum"></span>
+          </div>
+          <div class="boss-track" role="progressbar" aria-label="Haunting score" id="bossTrack"><div class="boss-fill" id="bossFill"></div></div>
+        </div>
+        <div class="yard-actions">
+          <button class="ghost-btn" id="again">Scan another site</button>
+          <button class="ghost-btn" id="share">Download share card</button>
+          <button class="ghost-btn" id="exportMd">Download report</button>
+          <button class="ghost-btn" id="exportCsv">Download CSV</button>
+        </div>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Show ghosts of one kind"></div>
+      <div class="stones" id="stones"></div>
+      <div class="plain" id="plain"></div>
+      <div class="peace" id="peace">
+        <h2>Your site is at peace.</h2>
+        <p id="peaceText">Every ghost has been banished. Scan again after you fix things to make sure they stay gone.</p>
+      </div>
+      <details class="locked" id="locked"></details>
+      <div class="limits" id="limits"></div>
+    </section>
+  </main>
+</div>
+
+<div class="walk" id="walk" aria-live="polite">
+  <div class="halls" id="halls" aria-hidden="true"></div>
+  <div class="darkness" aria-hidden="true"></div>
+  <div class="glow" aria-hidden="true"></div>
+  <div class="walk-status">
+    <div id="walkText">Lighting the lantern…</div>
+    <button class="walk-cancel" id="cancel">Stop and go back</button>
+  </div>
+</div>
+
+<div class="reveal" id="reveal" aria-live="assertive">
+  <div class="count" id="revealCount"></div>
+  <div class="sub" id="revealSub"></div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
