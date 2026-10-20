@@ -150,3 +150,12 @@ test('a site given without a scheme falls back to http when https fails', async 
   assert.match(r.site, /^http:\/\//);
   assert.ok(r.pagesScanned >= 1);
 });
+
+test('the scan reports presences as ghosts are found, so the screen can react live', async () => {
+  const events = [];
+  await scan(site.url, { now: '2026-10-20T12:00:00Z', delayMs: 0, timeoutMs: 4000 }, (e) => events.push(e));
+  const presences = events.filter((e) => e.type === 'presence');
+  assert.ok(presences.length >= 8);
+  assert.ok(presences.some((e) => e.kind === 'dead'));
+  assert.ok(events.some((e) => e.type === 'link' && e.status === 404));
+});

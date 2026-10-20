@@ -191,6 +191,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
       return;
     }
     const { label, fix } = describe(type, extra.data);
+    if (type !== 'locked') emit({ type: 'presence', kind: type, url: extra.url || foundOn[0] || null });
     ghosts.set(id, {
       id,
       type,
@@ -211,14 +212,14 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     // A link like https://n/ is a typo, not a site. Don't bother knocking.
     if (isMalformed(url)) {
       checked++;
-      emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
+      emit({ type: 'link', url, status: 'broken', linksChecked: checked, linksTotal: toCheck.length });
       addGhost('dead', url, foundOn, { url, data: { reason: 'malformed' }, detail: { error: 'malformed' } });
       return;
     }
     let r = linkResults.get(url);
     if (!r) { r = await f.follow(url); linkResults.set(url, r); }
     checked++;
-    emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
+    emit({ type: 'link', url, status: r.loop ? 'loop' : (r.status || r.error || null), hops: r.hops ? r.hops.length : 0, linksChecked: checked, linksTotal: toCheck.length });
     const g = classifyLink(r, url, opts.botShy, sameSite(url));
     if (g) addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
   });

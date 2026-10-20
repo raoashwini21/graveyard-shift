@@ -11,7 +11,16 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='22' fill='none' stroke='%23b8925a' stroke-width='5'/><circle cx='32' cy='32' r='6' fill='%23b8925a'/></svg>">
 </head>
 <body>
-<div class="grain" aria-hidden="true"></div>
+<!-- The chamber: atmosphere only, never content -->
+<div class="chamber" aria-hidden="true">
+  <div class="sigil" id="sigil"></div>
+  <div class="fog f1"></div><div class="fog f2"></div><div class="fog f3"></div>
+  <div class="candle-light cl1"></div><div class="candle-light cl2"></div>
+  <canvas class="embers" id="embers"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+<div class="veil" id="veil" aria-hidden="true"></div>
 
 <header class="top">
   <a class="mark" href="/" id="home">Graveyard Shift</a>
@@ -22,13 +31,15 @@
 </header>
 
 <main>
-  <!-- Landing -->
+  <!-- Landing: the ritual -->
   <section class="view landing" id="landing">
-    <div class="hero">
-      <div class="hero-copy">
-        <h1>Every website<br>is haunted.</h1>
-        <p class="lede">Graveyard Shift walks every page of your site and every link on it, then tells you what has quietly died: dead links, links that now lead somewhere else, copyright years stuck in the past and invitations to events that already ended.</p>
-        <form class="ask" id="ask" novalidate>
+    <div class="ritual">
+      <p class="kicker">A séance for your website</p>
+      <h1>Every website is haunted.</h1>
+      <p class="lede">Graveyard Shift walks every page and every link, then tells you what has quietly died: dead links, links that now lead somewhere else, years stuck in the past, invitations to parties that already ended.</p>
+      <div class="altar">
+        <div class="dial-slot" id="heroSlot"></div>
+        <form class="offering" id="ask" novalidate>
           <label class="sr-only" for="url">Website address</label>
           <div class="field">
             <span class="prefix" aria-hidden="true">https://</span>
@@ -36,34 +47,36 @@
             <button class="btn primary" type="submit">Begin the séance</button>
           </div>
           <div class="opts">
-            <label class="opt">Depth
+            <label class="opt">Rooms to walk
               <select id="maxPages">
-                <option value="50">50 pages</option>
-                <option value="100" selected>100 pages</option>
-                <option value="200">200 pages</option>
+                <option value="50">50</option>
+                <option value="100" selected>100</option>
+                <option value="200">200</option>
               </select>
             </label>
-            <label class="opt check"><input type="checkbox" id="external" checked> Include links to other sites</label>
+            <label class="opt check"><input type="checkbox" id="external" checked> Knock on other sites' doors</label>
           </div>
           <p class="error" id="error" role="alert"></p>
         </form>
       </div>
-      <div class="oracle-slot" id="heroSlot"></div>
     </div>
 
     <section class="index-section" aria-labelledby="revealsTitle">
-      <h2 id="revealsTitle">What the séance reveals</h2>
+      <div class="section-head">
+        <h2 id="revealsTitle">What the séance reveals</h2>
+        <p>Seven kinds of ghost, each with a plain explanation and a fix.</p>
+      </div>
       <ol class="reveals" id="reveals"></ol>
     </section>
 
     <section class="watch-section" aria-labelledby="watchTitle">
       <div>
         <h2 id="watchTitle">The weekly watch</h2>
-        <p>Add one file to any GitHub repository and Graveyard Shift visits your site every Monday. It keeps a single issue up to date and mentions you only when new ghosts move in. Delete the file and the haunting stops.</p>
+        <p>Add one file to any GitHub repository and Graveyard Shift returns to your site every Monday. It keeps a single issue up to date and mentions you only when new ghosts move in. Delete the file and the haunting stops.</p>
       </div>
-      <pre class="code"><code>- uses: raoashwini21/graveyard-shift@main
-  with:
-    site: yoursite.com</code></pre>
+      <pre class="code"><code><span class="c-k">- uses:</span> raoashwini21/graveyard-shift@main
+  <span class="c-k">with:</span>
+    <span class="c-k">site:</span> yoursite.com</code></pre>
     </section>
 
     <footer class="foot">
@@ -72,30 +85,42 @@
     </footer>
   </section>
 
-  <!-- Scan -->
+  <!-- Scan: the séance in progress -->
   <section class="view scan" id="scan" aria-live="polite">
     <div class="scan-grid">
       <div class="scan-copy">
         <p class="kicker">Séance in progress</p>
         <h1 id="scanHost"></h1>
         <p class="phase" id="scanPhase">The spirits are gathering.</p>
+
+        <div class="reading-now">
+          <span class="rn-label" id="rnLabel">Now entering</span>
+          <span class="rn-url" id="rnUrl">the front door</span>
+        </div>
+
         <dl class="counters">
-          <div><dt>Pages walked</dt><dd id="cPages">0</dd></div>
-          <div><dt>Links checked</dt><dd id="cLinks">0</dd></div>
+          <div><dt>Rooms walked</dt><dd id="cPages">0</dd></div>
+          <div><dt>Doors knocked</dt><dd id="cLinks">0</dd></div>
+          <div class="presence"><dt>Presences felt</dt><dd id="cGhosts">0</dd></div>
         </dl>
-        <div class="progress" aria-hidden="true"><span id="bar"></span></div>
-        <ol class="log" id="log"></ol>
         <button class="btn ghost" id="cancel" type="button">End the séance</button>
       </div>
-      <div class="oracle-slot" id="scanSlot"></div>
+      <div class="scan-stage">
+        <div class="dial-slot" id="scanSlot"></div>
+      </div>
+      <div class="evidence">
+        <p class="evidence-title">Evidence</p>
+        <ol class="log" id="log"></ol>
+        <p class="whisper" id="whisper"></p>
+      </div>
     </div>
   </section>
 
-  <!-- Report -->
+  <!-- Report: the reading -->
   <section class="view report" id="report">
     <header class="report-head">
-      <div>
-        <p class="kicker">A reading for</p>
+      <div class="rh-copy">
+        <p class="kicker">The reading is complete</p>
         <h1 id="rHost"></h1>
         <p class="meta" id="rMeta"></p>
       </div>
@@ -107,20 +132,30 @@
       </div>
     </header>
 
-    <div class="verdict" id="verdict">
+    <section class="verdict" id="verdict">
       <div class="verdict-main">
         <p class="verdict-word" id="vWord"></p>
         <p class="verdict-line" id="vLine"></p>
+        <dl class="omens" id="omens"></dl>
       </div>
-      <div class="verdict-score">
-        <span class="score-num" id="vScore"></span>
-        <span class="score-label">Unrest</span>
-      </div>
+      <figure class="gauge" aria-labelledby="gaugeCap">
+        <svg viewBox="0 0 240 150" class="gauge-svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="emberGrad" x1="0" x2="1"><stop offset="0" stop-color="#5e1a1d"/><stop offset=".6" stop-color="#a03a2c"/><stop offset="1" stop-color="#e0a35a"/></linearGradient>
+          </defs>
+          <path class="g-track" d="M20 130 A100 100 0 0 1 220 130"/>
+          <path class="g-fill" id="gFill" d="M20 130 A100 100 0 0 1 220 130"/>
+          <g class="g-ticks" id="gTicks"></g>
+          <g class="g-needle" id="gNeedle"><line x1="120" y1="130" x2="120" y2="44"/><circle cx="120" cy="130" r="5"/></g>
+        </svg>
+        <div class="gauge-num" id="vScore">0</div>
+        <figcaption id="gaugeCap">Unrest</figcaption>
+      </figure>
       <div class="spectrum" id="spectrum" aria-hidden="true"></div>
-    </div>
+    </section>
 
     <div class="report-body">
-      <nav class="toc" id="toc" aria-label="Findings by kind"></nav>
+      <nav class="toc" id="toc" aria-label="Case files"></nav>
       <div class="findings" id="findings"></div>
     </div>
     <div class="plain-table" id="plainTable"></div>
@@ -128,7 +163,6 @@
   </section>
 </main>
 
-<div class="oracle-home" id="oracleHome" hidden></div>
 <script src="app.js"></script>
 </body>
 </html>
