@@ -346,10 +346,17 @@
   };
 
   // ---------- The answer ----------
-  let state = { result: null, banished: new Set(), initialScore: 0 };
+  let state = { result: null, banished: new Set(), returned: new Set(), goneForGood: 0, initialScore: 0 };
   const answer = async (result) => {
     state.result = result;
-    state.banished = new Set(store.get('gs:banished:' + result.site, []));
+    // Banishing means "I fixed it". A fresh scan is the proof: anything banished that the scanner finds
+    // again has come back and counts as a ghost; anything banished that is no longer found is gone for good.
+    const before = new Set(store.get('gs:banished:' + result.site, []));
+    const ids = new Set(result.ghosts.map((g) => g.id));
+    state.returned = new Set([...before].filter((id) => ids.has(id)));
+    state.goneForGood = [...before].filter((id) => !ids.has(id)).length;
+    state.banished = new Set();
+    store.set('gs:banished:' + result.site, []);
     state.initialScore = result.ghosts.reduce((n, g) => n + ghostScore(g), 0);
     const n = result.ghostCount;
     if (isPlain() || reduceMotion) { renderReport(); return; }
@@ -437,10 +444,10 @@
     return `<li class="record${rested ? ' rested' : ''}" data-id="${esc(g.id)}" data-conf="${esc(g.confidence)}">
       <span class="rec-no">Nº ${String(i + 1).padStart(2, '0')}</span>
       <span class="sev" title="${conf}"></span>
-      <span class="rec-stamp" aria-hidden="true">${rested ? 'Laid to rest' : esc(stampText(g))}</span>
+      <span class="rec-stamp" aria-hidden="true">${rested ? 'Laid to rest' : state.returned.has(g.id) ? 'Came back' : esc(stampText(g))}</span>
       <div class="rec-body">
         ${target}<span class="rest-note">Laid to rest</span>
-        <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag">· likely</span>' : ''}</p>
+        <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag">· likely</span>' : ''}${state.returned.has(g.id) ? ' <span class="tag back">· you marked this fixed, but it\'s still there</span>' : ''}</p>
         ${g.type === 'locked' ? '' : `<p class="fix"><b>The cure</b>${esc(g.fix)}</p>`}
       </div>
       <div class="acts">
@@ -508,7 +515,7 @@
     verdictWord(left ? `${rankOf(s)}.` : 'At peace.');
     const top = ORDER.filter((t) => t !== 'locked' && alive(t).length).slice(0, 2);
     $('vLine').textContent = left
-      ? `${fmt(left)} ghost${left === 1 ? ' is' : 's are'} living in these pages, and your visitors are walking right into them. ${top.length ? 'Start with the ' + top.map((t) => count(alive(t).length, t)).join(', then the ') + '.' : ''}${state.banished.size ? ` ${fmt(state.banished.size)} banished so far.` : ''}`
+      ? `${fmt(left)} ghost${left === 1 ? ' is' : 's are'} living in these pages, and your visitors are walking right into them. ${top.length ? 'Start with the ' + top.map((t) => count(alive(t).length, t)).join(', then the ') + '.' : ''}${state.returned.size ? ` ${fmt(state.returned.size)} you marked fixed last time ${state.returned.size === 1 ? 'is' : 'are'} still here.` : ''}${state.goneForGood ? ` ${fmt(state.goneForGood)} you fixed ${state.goneForGood === 1 ? 'is' : 'are'} gone for good.` : ''}${state.banished.size ? ` ${fmt(state.banished.size)} banished so far.` : ''}`
       : r.ghostCount ? 'Every ghost banished. Publish your fixes, then search the house again to make sure they stay gone.' : 'Not a single ghost on the pages we searched. Links rot quietly, so come back in a few weeks, or hire the night watchman.';
     $('omens').innerHTML = `
       <div class="bad"><dt>Ghosts found</dt><dd>${fmt(left)}</dd></div>

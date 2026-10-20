@@ -981,3 +981,5 @@ body.plain .kc-name, body.plain .kinds-head h2, body.plain .watch h2 { color: #1
 body.plain .kc-desc, body.plain .kinds-head p, body.plain .watch-copy > p, body.plain .watch-steps li { color: #4b4740; }
 @media (max-width: 1000px) { .watch { grid-template-columns: 1fr; } .watch-art { display: none; } }
 @media (max-width: 600px) { .kinds-section { padding-top: 56px; } .watch { padding: 22px; } }
+
+body.on-report .sub .tag.back { color: #ffb4a0; }
