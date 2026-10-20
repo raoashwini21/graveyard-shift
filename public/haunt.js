@@ -88,7 +88,7 @@ window.Haunt = (() => {
 
   // ---------- Events ----------
   // A veiled figure drifts slowly behind the interface.
-  const drift = async ({ opacity = 0.14, height = rand(42, 58), duration = rand(20000, 28000), y = rand(18, 42) } = {}) => {
+  const drift = async ({ opacity = 0.18, height = rand(42, 58), duration = rand(20000, 28000), y = rand(18, 42) } = {}) => {
     if (!on()) return;
     const layer = $('specters');
     const g = figure('specter', 'specter');
@@ -242,6 +242,7 @@ window.Haunt = (() => {
       ], { duration: 3600, easing: 'cubic-bezier(.4,0,.6,1)' }).finished.then(() => g.remove(), () => g.remove());
     }
     await wait(1500);
+    if (window.Ghosts) Ghosts.swarm({ x: innerWidth / 2, y: innerHeight / 2 });
     box.classList.add('on');
     sound('lit');
     await wait(2600);
@@ -249,6 +250,7 @@ window.Haunt = (() => {
     await sleep(skip() ? 200 : 900);
     box.classList.remove('on', 'leaving');
     document.body.classList.remove('hush');
+    if (window.Ghosts) Ghosts.roam();
   };
 
   // ---------- Scenes ----------
@@ -267,7 +269,8 @@ window.Haunt = (() => {
     clear();
     if (!on()) return;
     if (name === 'landing') {
-      every(() => drift(), 26000, 48000, 5000);
+      every(() => window.Ghosts && Ghosts.peek(document.querySelector('.field')), 13000, 21000, 3500);
+      every(() => drift({ opacity: 0.2 }), 30000, 50000, 18000);
       every(sweep, 30000, 50000, 14000);
       every(reflect, 18000, 34000, 9000);
       every(disturb, 28000, 55000);

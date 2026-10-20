@@ -229,6 +229,9 @@
     if (name === 'scan') $('scanSlot').appendChild(dial);
     window.scrollTo({ top: 0, behavior: 'auto' });
     Haunt.scene(name);
+    if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .index-section h2', presence: 0.9 }); setTimeout(() => current === 'landing' && Ghosts.idle(2), 900); }
+    if (name === 'scan') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.scan-copy > *, .evidence > *', presence: 0.95 }); }
+    if (name === 'report') Ghosts.setting({ avoid: '.report-head > *, .verdict-main > *, .gauge, .casefile, .toc, .limits', presence: 0.55 });
     if (name === 'landing') { idleSpoken = 0; lastTyped = Date.now(); }
   };
 
@@ -349,6 +352,7 @@
   const felt = (e) => {
     presences++;
     Haunt.felt(e.kind, dial.getBoundingClientRect(), presences);
+    if (KINDS[e.kind]) Ghosts.spawn(e.kind, dial.getBoundingClientRect(), `${KINDS[e.kind].name} · ${e.url ? shortPath(e.url) : ''}`);
     const dd = $('cGhosts');
     dd.textContent = fmt(presences);
     dd.classList.remove('pulse'); void dd.offsetWidth; dd.classList.add('pulse');
@@ -629,6 +633,13 @@
     document.querySelectorAll('.casefile').forEach((c) => observer.observe(c));
   };
 
+  const ghostInfo = (g) => `${KINDS[g.type].name}: ${g.quote ? '“' + g.quote.slice(0, 60) + (g.quote.length > 60 ? '…' : '') + '”' : shortUrl(g.url)}. Click to open its case file.`;
+  const callRecord = (id) => {
+    const el = document.querySelector(`.record[data-id="${CSS.escape(id)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    el.classList.remove('called'); void el.offsetWidth; el.classList.add('called');
+  };
   const renderReport = () => {
     const r = state.result;
     $('rHost').textContent = hostOf(r.site);
@@ -656,6 +667,8 @@
     show('report');
     paintSummary();
     watchCases();
+    Ghosts.populate(aliveAll().map((g) => ({ id: g.id, type: g.type, info: ghostInfo(g) })), innerWidth < 900 ? 5 : 9);
+    Ghosts.pickable(callRecord);
   };
 
   $('findings').addEventListener('click', async (e) => {
@@ -674,6 +687,7 @@
       fresh.innerHTML = recordHtml(g, idx);
       const el = fresh.firstElementChild;
       el.classList.add('returning');
+      Ghosts.restore({ id, type: g.type, info: ghostInfo(g) }, rec.getBoundingClientRect());
       rec.replaceWith(el);
       setTimeout(() => el.classList.remove('returning'), 1300);
     } else {
@@ -681,6 +695,7 @@
       sfx.banish();
       store.set('gs:banished:' + state.result.site, [...state.banished]);
       Haunt.release(rec);
+      Ghosts.release(id, g.type);
       if (!reduceMotion) {
         const smoke = document.createElement('div');
         smoke.className = 'smoke';
