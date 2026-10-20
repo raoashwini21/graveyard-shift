@@ -131,11 +131,10 @@
   paintSound();
 
   // ---------- Plain report ----------
-  const plainBtn = $('plainBtn');
-  const isPlain = () => document.body.classList.contains('plain');
-  const setPlain = (on) => { document.body.classList.toggle('plain', on); plainBtn.setAttribute('aria-pressed', String(on)); store.set('gs:plain', on); };
-  plainBtn.onclick = () => setPlain(!isPlain());
-  setPlain(store.get('gs:plain', false));
+  // The plain report toggle was removed from the header; make sure nobody stays stuck in it.
+  const isPlain = () => false;
+  document.body.classList.remove('plain');
+  store.set('gs:plain', false);
 
   // ---------- Dust in the candlelight ----------
   (() => {
