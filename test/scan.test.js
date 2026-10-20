@@ -137,4 +137,9 @@ test('a link that now lands on a different company is possessed', () => {
   const store = { status: 200, hops: [{ url: 'x', status: 301 }], finalUrl: 'https://chromewebstore.google.com/detail/a' };
   assert.equal(classifyLink(store, 'https://chrome.google.com/webstore/detail/a', [], false), null);
   assert.equal(baseDomain('https://shop.example.co.uk/x'), 'example.co.uk');
+  // short links and same-name domain moves are not takeovers
+  const yt = { status: 200, hops: [{ url: 'https://youtu.be/abc', status: 301 }], finalUrl: 'https://www.youtube.com/watch?v=abc' };
+  assert.equal(classifyLink(yt, 'https://youtu.be/abc', [], false), null);
+  const outreach = { status: 200, hops: [{ url: 'https://www.outreach.io/', status: 301 }], finalUrl: 'https://www.outreach.ai/' };
+  assert.equal(classifyLink(outreach, 'https://www.outreach.io/', [], false), null);
 });

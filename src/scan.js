@@ -283,12 +283,19 @@ export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy, inte
   if (isAuthWall(r.finalUrl)) return null; // ends on a login page; linking there would be worse
   const from = baseDomain(url);
   const to = baseDomain(r.finalUrl);
-  if (from && to && from !== to) {
+  // Short links (youtu.be, bit.ly) are meant to land somewhere else.
+  if (SHORTENERS.has(from)) return null;
+  // Same name, new ending (outreach.io → outreach.ai) is the same company, not a takeover.
+  const sameName = from.split('.')[0] === to.split('.')[0];
+  if (from && to && from !== to && !sameName) {
     return { type: 'possessed', data: { finalHost: hostOf(r.finalUrl), finalUrl: r.finalUrl }, detail };
   }
   const real = meaningfulHops(url, r);
   return real >= 2 ? { type: 'chain', data: { hops: real, finalUrl: r.finalUrl }, detail } : null;
 }
+
+const SHORTENERS = new Set(['youtu.be', 'bit.ly', 't.co', 'lnkd.in', 'buff.ly', 'goo.gl', 'g.co', 'amzn.to', 'ow.ly',
+  'tinyurl.com', 'rebrand.ly', 'cutt.ly', 'shorturl.at', 'is.gd', 'rb.gy', 'tiny.cc', 'spoti.fi', 'apple.co', 'fb.me', 'wa.me', 'calendly.com']);
 
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; } };
 
