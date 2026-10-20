@@ -229,7 +229,7 @@ window.Haunt = (() => {
     document.body.classList.add('hush');
     sound('hush');
     await wait(1100);
-    if (!skip()) {
+    if (!skip() && !document.body.classList.contains('on-yard')) {
       const g = figure('specter', 'specter through');
       g.style.height = '78vh';
       g.style.top = '8vh';
@@ -240,7 +240,7 @@ window.Haunt = (() => {
       ], { duration: 3600, easing: 'cubic-bezier(.4,0,.6,1)' }).finished.then(() => g.remove(), () => g.remove());
     }
     await wait(1500);
-    if (window.Ghosts) Ghosts.swarm({ x: innerWidth / 2, y: innerHeight / 2 });
+    if (window.Ghosts && !document.body.classList.contains('on-yard')) Ghosts.swarm({ x: innerWidth / 2, y: innerHeight / 2 });
     box.classList.add('on');
     sound('lit');
     await wait(2600);

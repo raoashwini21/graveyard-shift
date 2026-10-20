@@ -503,7 +503,7 @@ function start() {
   let slow = 0, frames = 0, lowered = false;
   const frame = () => {
     requestAnimationFrame(frame);
-    if (document.hidden || document.body.classList.contains('plain') || document.body.classList.contains('on-landing')) return;
+    if (document.hidden || document.body.classList.contains('plain') || document.body.classList.contains('on-landing') || document.body.classList.contains('on-yard')) return;
     const raw = clock.getDelta();
     const dt = Math.min(raw, 0.05), t = clock.elapsedTime;
     // If this machine struggles, render fewer pixels and drop the bloom rather than stutter.

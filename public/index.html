@@ -119,35 +119,48 @@
     </footer>
   </section>
 
-  <!-- Scan: the séance in progress -->
+  <!-- Scan: Wisp patrols the graveyard. Every tombstone is a real finding. -->
   <section class="view scan" id="scan" aria-live="polite">
-    <div class="scan-grid">
-      <div class="scan-copy">
-        <p class="kicker">The search is on</p>
-        <h1 id="scanHost"></h1>
-        <p class="phase" id="scanPhase">Picking the lock.</p>
-
-        <div class="reading-now">
-          <span class="rn-label" id="rnLabel">Opening</span>
-          <span class="rn-url" id="rnUrl">the front door</span>
+    <div class="yard" id="yard" aria-hidden="true">
+      <img class="yard-bg" src="art/scan-bg.webp" alt="">
+      <div class="yard-lamps" id="yardLamps"></div>
+      <div class="yard-mist far"></div>
+      <div class="yard-ground" id="yardGround"></div>
+      <div class="patrol" id="patrol">
+        <div class="patrol-glow"></div>
+        <div class="patrol-pose">
+          <img data-pose="search" class="on" src="art/ghost-search.webp" alt="">
+          <img data-pose="point" src="art/ghost-point.webp" alt="">
+          <img data-pose="gasp" src="art/ghost-gasp.webp" alt="">
+          <img data-pose="happy" src="art/ghost-happy.webp" alt="">
         </div>
-
-        <dl class="counters">
-          <div><dt>Rooms searched</dt><dd id="cPages">0</dd></div>
-          <div><dt>Doors tried</dt><dd id="cLinks">0</dd></div>
-          <div class="presence"><dt>Ghosts found</dt><dd id="cGhosts">0</dd></div>
-        </dl>
-        <button class="btn ghost" id="cancel" type="button">Get out of here</button>
       </div>
-      <div class="scan-stage">
-        <div class="dial-slot" id="scanSlot"></div>
+      <div class="yard-mist near"></div>
+      <div class="yard-shade"></div>
+    </div>
+    <div class="scan-hud">
+      <div class="hud-who">
+        <p class="kicker">The graveyard shift has begun</p>
+        <h1 id="scanHost"></h1>
+        <p class="phase" id="scanPhase">Lighting the lantern.</p>
       </div>
+      <dl class="counters">
+        <div><dt>Pages checked</dt><dd id="cPages">0</dd></div>
+        <div><dt>Links tested</dt><dd id="cLinks">0</dd></div>
+        <div class="presence"><dt>Ghosts found</dt><dd id="cGhosts">0</dd></div>
+      </dl>
       <div class="evidence">
         <p class="evidence-title">Evidence log</p>
         <ol class="log" id="log"></ol>
-        <p class="whisper" id="whisper"></p>
+      </div>
+      <button class="btn ghost" id="cancel" type="button">Stop</button>
+      <div class="hud-progress">
+        <div class="reading-now"><span class="rn-label" id="rnLabel">Checking</span><span class="rn-url" id="rnUrl">the front gate</span></div>
+        <div class="scan-bar"><span id="scanBar"></span></div>
       </div>
     </div>
+    <p class="whisper" id="whisper"></p>
+    <div class="dial-slot" id="scanSlot" hidden></div>
   </section>
 
   <!-- Report: the reading -->
@@ -203,6 +216,7 @@
 <script src="ghosts.js"></script>
 <script src="app.js"></script>
 <script src="hero.js"></script>
+<script src="yard.js"></script>
 <script type="module" src="hall3d.js"></script>
 </body>
 </html>

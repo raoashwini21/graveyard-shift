@@ -67,37 +67,67 @@
     speechless: (u) => `${u} won't say a word.`,
   };
 
-  // ---------- Sound (off by default, synthesised, quiet) ----------
-  let audio = null;
-  let soundOn = store.get('gs:sound', false);
-  const tone = (f, dur, gain = 0.05, slide = null, type = 'sine') => {
-    if (!soundOn) return;
-    try {
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audio.createOscillator(); const g = audio.createGain();
-      o.type = type; o.frequency.setValueAtTime(f, audio.currentTime);
-      if (slide) o.frequency.exponentialRampToValueAtTime(slide, audio.currentTime + dur);
-      g.gain.setValueAtTime(gain, audio.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + dur);
-      o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
-    } catch {}
+  // ---------- Sound: recorded effects in sfx/ (rendered by tools/make-sounds.py) ----------
+  // Nothing plays until you press a button (browsers require it), and the header toggle mutes everything.
+  let audio = null, master = null, ambGain = null, ambSrc = null;
+  let soundOn = store.get('gs:sound2', true);
+  const buffers = {};
+  const ctx = () => {
+    if (!audio) {
+      try { audio = new (window.AudioContext || window.webkitAudioContext)(); master = audio.createGain(); master.gain.value = soundOn ? 0.9 : 0; master.connect(audio.destination); } catch { audio = null; }
+    }
+    if (audio && audio.state === 'suspended') audio.resume().catch(() => {});
+    return audio;
   };
+  const load = (name) => {
+    if (!buffers[name]) buffers[name] = fetch('sfx/' + name + '.mp3').then((r) => r.arrayBuffer()).then((b) => new Promise((res, rej) => audio.decodeAudioData(b, res, rej))).catch(() => null);
+    return buffers[name];
+  };
+  const play = async (name, { gain = 1, rate = 1, delay = 0 } = {}) => {
+    if (!soundOn || !ctx()) return;
+    const buf = await load(name); if (!buf) return;
+    const src = audio.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    const g = audio.createGain(); g.gain.value = gain; src.connect(g).connect(master); src.start(audio.currentTime + delay);
+  };
+  const ambience = async (on) => {
+    if (!ctx()) return;
+    if (on) {
+      if (ambSrc) return;
+      const buf = await load('ambience'); if (!buf || ambSrc) return;
+      ambGain = audio.createGain(); ambGain.gain.value = 0; ambGain.connect(master);
+      ambSrc = audio.createBufferSource(); ambSrc.buffer = buf; ambSrc.loop = true; ambSrc.connect(ambGain); ambSrc.start();
+      ambGain.gain.linearRampToValueAtTime(0.55, audio.currentTime + 3);
+    } else if (ambSrc) {
+      const s = ambSrc, g = ambGain; ambSrc = null;
+      g.gain.cancelScheduledValues(audio.currentTime); g.gain.setValueAtTime(g.gain.value, audio.currentTime); g.gain.linearRampToValueAtTime(0, audio.currentTime + 2.5);
+      setTimeout(() => { try { s.stop(); } catch {} }, 2700);
+    }
+  };
+  const warm = () => { if (ctx()) ['creak', 'knock', 'ambience', 'heartbeat', 'reveal', 'banish', 'ghost-dead'].forEach(load); };
   const sfx = {
-    tick: () => tone(1400 + Math.random() * 200, 0.04, 0.012, null, 'triangle'),
-    felt: () => { tone(98, 1.4, 0.07, 73); tone(147, 1.1, 0.02, 110); },
-    invoke: () => { tone(55, 2.6, 0.16, 49); tone(220, 2, 0.02, 196); },
-    answer: () => { tone(55, 2.2, 0.22, 40); tone(110, 1.6, 0.04, 82); },
-    banish: () => { tone(660, 0.9, 0.03, 1320); setTimeout(() => tone(990, 0.8, 0.015, 1760), 120); },
-    restore: () => tone(330, 0.9, 0.04, 196),
-    scare: () => { tone(46, 0.9, 0.3, 30, 'sawtooth'); tone(1900, 0.35, 0.03, 900); },
-    hush: () => tone(40, 2.4, 0.12, 32),
-    knock: () => { tone(120, 0.12, 0.12, 70, 'triangle'); setTimeout(() => tone(110, 0.12, 0.1, 65, 'triangle'), 170); },
-    creak: () => { tone(180 + Math.random() * 60, 0.7, 0.012, 260 + Math.random() * 80, 'sawtooth'); },
-    lit: () => { tone(82, 2.4, 0.2, 55); tone(330, 1.8, 0.03, 247); tone(494, 2.2, 0.015, 370); },
+    tick: () => {},
+    felt: (kind) => play('ghost-' + (kind || 'dead'), { gain: 0.8, rate: 0.94 + Math.random() * 0.12 }),
+    invoke: () => { play('creak', { gain: 0.9 }); ambience(true); },
+    answer: () => {},
+    banish: () => play('banish', { gain: 0.8 }),
+    restore: () => play('creak', { gain: 0.5, rate: 1.3 }),
+    scare: () => play('scare', { gain: 0.9 }),
+    hush: () => { ambience(false); play('heartbeat', { gain: 1 }); },
+    knock: () => play('knock', { gain: 0.8 }),
+    creak: () => play('creak', { gain: 0.45, rate: 0.9 + Math.random() * 0.3 }),
+    lit: () => play('reveal', { gain: 1 }),
+    stop: () => ambience(false),
   };
+  addEventListener('pointerdown', warm, { once: true });
+  addEventListener('keydown', warm, { once: true });
   Haunt.onSound((name) => sfx[name] && sfx[name]());
   const soundBtn = $('soundBtn');
   const paintSound = () => { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; };
-  soundBtn.onclick = () => { soundOn = !soundOn; store.set('gs:sound', soundOn); paintSound(); sfx.tick(); };
+  soundBtn.onclick = () => {
+    soundOn = !soundOn; store.set('gs:sound2', soundOn); paintSound();
+    if (ctx() && master) master.gain.setTargetAtTime(soundOn ? 0.9 : 0, audio.currentTime, 0.05);
+    if (soundOn) play('knock', { gain: 0.5 });
+  };
   paintSound();
 
   // ---------- Plain report ----------
@@ -134,7 +164,7 @@
   // ---------- The door ----------
   const door = Door.create(document.createElement('div'));
   const doorEl = door.el;
-  const setProgress = (f) => door.progress(f);
+  const setProgress = (f) => { door.progress(f); if (window.Yard) Yard.progress(f); };
 
   // ---------- Views ----------
   let current = 'landing';
@@ -143,11 +173,13 @@
     for (const v of ['landing', 'scan', 'report']) $(v).classList.toggle('on', v === name);
     document.body.classList.toggle('on-landing', name === 'landing');
     if (name === 'landing') { door.shut(); door.label('Knock'); door.progress(0); }
+    document.body.classList.toggle('on-yard', name === 'scan');
     if (name === 'scan') { $('scanSlot').appendChild(doorEl); door.shut(); door.progress(0); }
     window.scrollTo({ top: 0, behavior: 'auto' });
-    Haunt.scene(name === 'landing' ? 'quiet' : name);
+    Haunt.scene('quiet');
     if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .door, .index-section h2', presence: 0.9 }); }
     if (name === 'scan') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.scan-copy > *, .evidence > *, .door', presence: 0.95 }); }
+    document.body.classList.toggle('on-report', name === 'report');
     if (name === 'report') Ghosts.setting({ avoid: '.report-head > *, .verdict-main > *, .gauge, .casefile, .toc, .limits', presence: 0.55 });
     if (name === 'landing') { idleSpoken = 0; lastTyped = Date.now(); }
   };
@@ -198,6 +230,7 @@
     if (source) source.close();
     source = null;
     document.body.classList.remove('speaking', 'scanning', 'felt', 'invoking');
+    sfx.stop();
   };
   $('home').onclick = (e) => { e.preventDefault(); stopScan(); show('landing'); };
 
@@ -230,20 +263,14 @@
   };
   const felt = (e) => {
     presences++;
-    const mouth = door.mouth();
-    Haunt.felt(e.kind, mouth, presences);
-    if (KINDS[e.kind]) Ghosts.spawn(e.kind, mouth, `${KINDS[e.kind].name} · ${e.url ? shortPath(e.url) : ''}`);
+    if (window.Yard && KINDS[e.kind]) Yard.found(e.kind, e.url ? shortPath(e.url) : '', KINDS[e.kind]);
     const dd = $('cGhosts');
     dd.textContent = fmt(presences);
     dd.classList.remove('pulse'); void dd.offsetWidth; dd.classList.add('pulse');
     const now = Date.now();
     if (now - lastWhisper > 2200) {
       lastWhisper = now;
-      document.body.classList.add('felt');
-      setTimeout(() => document.body.classList.remove('felt'), 900);
-      door.burst();
-      door.label(KINDS[e.kind] ? KINDS[e.kind].stamp : 'Something');
-      sfx.felt();
+      sfx.felt(e.kind);
       const w = $('whisper');
       w.textContent = (WHISPERS[e.kind] || (() => 'Something moved.'))(e.url ? shortPath(e.url) : 'this house');
       w.classList.add('on');
@@ -265,16 +292,16 @@
 
     // The door swings open and you step through.
     sfx.invoke();
-    door.wide();
     document.body.classList.add('invoking');
     await sleep(reduceMotion || isPlain() ? 0 : 850);
     $('scanHost').textContent = scanHost;
-    phaseText = ''; $('scanPhase').textContent = 'Picking the lock.';
+    phaseText = ''; $('scanPhase').textContent = 'Lighting the lantern.';
     $('cPages').textContent = '0'; $('cLinks').textContent = '0'; $('cGhosts').textContent = '0';
     presences = 0;
     $('log').innerHTML = '';
     $('whisper').classList.remove('on');
-    reading('Opening', 'the front door');
+    reading('Checking', 'the front gate');
+    if (window.Yard) Yard.start();
     setProgress(0);
     show('scan');
     document.body.classList.add('scanning');
@@ -285,24 +312,22 @@
     source = new EventSource('/api/scan?' + qs);
     source.addEventListener('progress', (m) => {
       const d = JSON.parse(m.data);
-      if (d.type === 'phase' && d.phase === 'knocking') setPhase('Picking the lock.');
-      if (d.type === 'phase' && d.phase === 'reading the map') setPhase('Reading the floor plan.');
-      if (d.type === 'phase' && d.phase === 'knocking on every door') { setPhase('Rattling every door handle.'); door.label('Every door'); }
+      if (d.type === 'phase' && d.phase === 'knocking') setPhase('Lighting the lantern.');
+      if (d.type === 'phase' && d.phase === 'reading the map') setPhase('Reading the map of the grounds.');
+      if (d.type === 'phase' && d.phase === 'knocking on every door') setPhase('Testing every link, one grave at a time.');
       if (d.type === 'page') {
-        setPhase('Searching every room.');
+        setPhase('Walking every page.');
+        if (window.Yard) Yard.page(d.pagesScanned);
         $('cPages').textContent = fmt(d.pagesScanned);
         setProgress(0.4 * (d.pagesScanned / maxPages));
-        reading('Opening', shortPath(d.url));
+        reading('Checking page', shortPath(d.url));
         log('room', shortPath(d.url));
-        if (door.enter(shortPath(d.url), 700)) sfx.creak();
-        if (d.pagesScanned % 3 === 0) Hall.creak(1200);
       }
       if (d.type === 'link') {
         $('cLinks').textContent = fmt(d.linksChecked);
         setProgress(0.4 + 0.6 * (d.linksChecked / Math.max(1, d.linksTotal)));
         if (d.linksChecked % 2 === 0 || (typeof d.status === 'number' && d.status >= 400)) {
-          reading('Rattling', shortPath(d.url));
-          if (d.linksChecked % 6 === 0) door.knock();
+          reading('Testing link', shortPath(d.url));
           log(d.status, d.status === 'broken' ? d.url : shortPath(d.url));
         }
       }
@@ -327,22 +352,19 @@
     if (isPlain() || reduceMotion) { renderReport(); return; }
 
     document.body.classList.add('speaking');
-    setPhase('Every room searched. Opening the last door.');
-    reading('Last door', hostOf(result.site));
-    door.label('The truth');
+    setPhase('Every page walked. Counting the graves.');
+    reading('Done', hostOf(result.site));
+    if (window.Yard) Yard.finish(n);
     let skip = false;
     const onSkip = () => { skip = true; };
     document.addEventListener('click', onSkip, { once: true });
     document.addEventListener('keydown', onSkip, { once: true });
     const wait = (ms) => (skip ? Promise.resolve() : sleep(ms));
     await wait(700);
-    door.knock(); sfx.knock(); await wait(650);
-    door.knock(); sfx.knock(); await wait(900);
-    door.ajar(); sfx.creak(); await wait(900);
-    door.wide(); sfx.answer();
-    if (n) { const m = door.mouth(); Ghosts.swarm({ x: m.left + m.width / 2, y: m.top + m.height / 2 }); }
-    setPhase(n ? `${fmt(n)} ghost${n === 1 ? ' was' : 's were'} hiding in here.` : 'Empty. Not a single ghost.');
-    await wait(1500);
+    await wait(900);
+    sfx.knock(); await wait(1100);
+    setPhase(n ? `${fmt(n)} ghost${n === 1 ? '' : 's'} in this graveyard.` : 'Not a single ghost. Wisp is delighted.');
+    await wait(1600);
     const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
     const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
     await Haunt.reveal({ count: leftNow, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip });
@@ -421,9 +443,10 @@
 
   const caseHtml = (t) => {
     const k = KINDS[t];
-    return `<section class="casefile" id="g-${t}" style="--accent:${t === 'locked' ? 'var(--bone-3)' : k.color}">
+    const fx = `<div class="case-fx fx-${t}" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i style="--i:${i};--r:${(i * 37) % 100}"></i>`).join('')}${t === 'speechless' ? '<em>shh…</em><em>shh…</em>' : ''}</div>`;
+    return `<section class="casefile kind-${t}" id="g-${t}" style="--accent:${t === 'locked' ? '#9aa3b5' : k.color}">${fx}
       <header class="case-head">
-        <span class="room-door" aria-hidden="true"><i class="rd-light"></i><i class="rd-eyes"><b></b><b></b></i><i class="rd-leaf"></i></span>
+        <button class="spirit sp-${t}" type="button" data-spirit="${t}" aria-label="${esc(k.name)}: hear it"><img src="art/spirit-${t}.webp" alt="" onerror="this.parentNode.classList.add('no-art');this.style.display='none'"></button>
         <div>
           <div class="case-title"><span class="n">Room ${k.n}</span><h2>${k.name}</h2></div>
           <p class="case-epitaph">${k.epitaph}</p>
@@ -561,10 +584,24 @@
     show('report');
     paintSummary();
     watchCases();
-    Ghosts.populate(aliveAll().map((g) => ({ id: g.id, type: g.type, info: ghostInfo(g) })), innerWidth < 900 ? 5 : 9);
-    Ghosts.pickable(callRecord);
+    Ghosts.clear();
   };
 
+  // Banish: a little copy of that kind's spirit lifts off the record and dissolves into sparks.
+  const releaseSpirit = (rec, type) => {
+    if (reduceMotion || document.body.classList.contains('calm')) return;
+    const r = rec.getBoundingClientRect();
+    const w = document.createElement('div');
+    w.className = 'released';
+    w.innerHTML = `<img src="art/spirit-${type}.webp" alt="" onerror="this.remove()">` + Array.from({ length: 14 }, (_, i) => `<i style="--a:${(i / 14) * 360}deg;--d:${40 + (i * 23) % 50}px"></i>`).join('');
+    w.style.left = (r.left + Math.min(r.width * 0.35, 260)) + 'px'; w.style.top = (r.top + r.height / 2) + 'px';
+    document.body.appendChild(w);
+    setTimeout(() => w.remove(), 2200);
+  };
+  $('findings').addEventListener('click', (e) => {
+    const sp = e.target.closest('[data-spirit]');
+    if (sp) { sfx.felt(sp.dataset.spirit); sp.classList.remove('spooked'); void sp.offsetWidth; sp.classList.add('spooked'); }
+  });
   $('findings').addEventListener('click', async (e) => {
     const b = e.target.closest('[data-toggle]');
     if (!b || b.disabled) return;
@@ -581,15 +618,13 @@
       fresh.innerHTML = recordHtml(g, idx);
       const el = fresh.firstElementChild;
       el.classList.add('returning');
-      Ghosts.restore({ id, type: g.type, info: ghostInfo(g) }, rec.getBoundingClientRect());
       rec.replaceWith(el);
       setTimeout(() => el.classList.remove('returning'), 1300);
     } else {
       state.banished.add(id);
       sfx.banish();
       store.set('gs:banished:' + state.result.site, [...state.banished]);
-      Haunt.release(rec);
-      Ghosts.release(id, g.type);
+      releaseSpirit(rec, g.type);
       if (!reduceMotion) {
         const smoke = document.createElement('div');
         smoke.className = 'smoke';
