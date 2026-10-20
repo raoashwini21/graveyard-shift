@@ -5,14 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graveyard Shift: a séance for your website</title>
 <meta name="description" content="Hold a séance for your website. The spirits reveal dead links, possessed links, stale years and parties that already ended.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<link rel="preload" href="fonts/fell-sc.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕯️</text></svg>">
 </head>
 <body>
-<div class="room" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 
 <header class="bar">
   <button class="toggle" id="sound" aria-pressed="false">Sound off</button>
@@ -24,26 +22,9 @@
     <p class="invite" id="invite">Ask the spirits what haunts your website.</p>
 
     <div class="table">
-      <div class="candle left" aria-hidden="true"><i class="flame"></i></div>
-      <div class="board" id="board" role="img" aria-label="A spirit board">
-        <div class="board-name">Graveyard Shift</div>
-        <div class="letters" id="letters"></div>
-        <svg class="planchette" id="planchette" viewBox="0 0 120 140" aria-hidden="true">
-          <defs>
-            <radialGradient id="lens" cx="50%" cy="45%" r="55%">
-              <stop offset="0" stop-color="#fff8e6" stop-opacity=".55"/>
-              <stop offset="1" stop-color="#fff8e6" stop-opacity=".05"/>
-            </radialGradient>
-          </defs>
-          <path d="M60 4 C 98 4, 116 52, 112 86 C 108 118, 84 136, 60 136 C 36 136, 12 118, 8 86 C 4 52, 22 4, 60 4 Z" fill="#4a2a17" stroke="#d9a441" stroke-width="3"/>
-          <path d="M60 14 C 90 14, 104 54, 100 84 C 97 110, 80 126, 60 126 C 40 126, 23 110, 20 84 C 16 54, 30 14, 60 14 Z" fill="none" stroke="#d9a441" stroke-width="1" opacity=".5"/>
-          <circle cx="60" cy="46" r="20" fill="url(#lens)" stroke="#d9a441" stroke-width="3"/>
-          <circle cx="60" cy="46" r="24" fill="none" stroke="#d9a441" stroke-width="1" opacity=".6"/>
-          <path d="M44 92 h32 M50 102 h20" stroke="#d9a441" stroke-width="2" stroke-linecap="round" opacity=".7"/>
-          <circle cx="60" cy="82" r="3" fill="#d9a441"/>
-        </svg>
-      </div>
-      <div class="candle right" aria-hidden="true"><i class="flame"></i></div>
+      <div class="candle" aria-hidden="true"></div>
+      <div class="board" id="board" role="img" aria-label="A spirit board"></div>
+      <div class="candle tall" aria-hidden="true"></div>
     </div>
 
     <form class="ask" id="ask">
@@ -55,12 +36,12 @@
       <div class="options">
         <label>Rooms to walk
           <select id="maxPages">
-            <option value="50">50 pages</option>
-            <option value="100" selected>100 pages</option>
-            <option value="200">200 pages</option>
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="200">200</option>
           </select>
         </label>
-        <label><input type="checkbox" id="external" checked> Visit links to other sites</label>
+        <label><input type="checkbox" id="external" checked> Knock on other sites' doors too</label>
       </div>
       <p class="error" id="error" role="alert"></p>
     </form>
@@ -69,7 +50,7 @@
       <p class="trance-line" id="tranceLine">The spirits are gathering…</p>
       <p class="trance-path" id="trancePath"></p>
       <p class="trance-count" id="tranceCount"></p>
-      <button class="link-btn" id="cancel" type="button">End the séance</button>
+      <button class="quiet-btn" id="cancel" type="button">End the séance</button>
     </div>
 
     <p class="spoken" id="spoken" aria-live="assertive"></p>
@@ -81,14 +62,14 @@
         <h1 id="readingTitle"></h1>
         <p class="verdict" id="verdict"></p>
         <div class="actions">
-          <button class="act" id="again" type="button">New séance</button>
-          <button class="act" id="share" type="button">Download share card</button>
-          <button class="act" id="exportMd" type="button">Download report</button>
-          <button class="act" id="exportCsv" type="button">Download CSV</button>
+          <button class="quiet-btn" id="again" type="button">New séance</button>
+          <button class="quiet-btn" id="share" type="button">Download share card</button>
+          <button class="quiet-btn" id="exportMd" type="button">Report</button>
+          <button class="quiet-btn" id="exportCsv" type="button">CSV</button>
         </div>
       </div>
       <figure class="unrest" aria-labelledby="unrestCap">
-        <div class="tall-candle" id="tallCandle"><i class="flame"></i><span class="wax" id="wax"></span></div>
+        <div class="meter" id="meter"></div>
         <figcaption id="unrestCap"></figcaption>
       </figure>
     </div>
@@ -103,6 +84,7 @@
 </main>
 
 <div class="dark" id="dark" aria-hidden="true"></div>
+<script src="art.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

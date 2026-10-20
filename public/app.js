@@ -10,52 +10,26 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
 
-  // ---------- The arcana: one tarot card per kind of ghost ----------
-  const B = '#d9a441', E = '#9fe8c6', D = '#14060d';
-  const svg = (inner) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" fill="none" stroke="${B}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
-  const ghostShape = (x, y, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})" stroke="${E}"><path d="M0 0 c-9 0-13 8-13 17 v15 l4.3-4 4.3 4 4.4-4 4.3 4 4.4-4 4.3 4 v-15 c0-9-4-17-13-17z" fill="${E}" fill-opacity=".12"/><circle cx="-4.5" cy="14" r="1.6" fill="${E}"/><circle cx="4.5" cy="14" r="1.6" fill="${E}"/></g>`;
+  // ---------- The arcana: one tarot card per kind of ghost (drawings live in art.js) ----------
   const ARCANA = {
-    dead: {
-      numeral: 'XIII', name: 'The Departed', plural: ['dead link', 'dead links'],
-      meaning: 'Links to pages that no longer exist. Anyone who clicks them hits a dead end.',
-      art: svg(`<rect x="10" y="66" width="38" height="20" rx="10" transform="rotate(-35 29 76)"/><rect x="52" y="82" width="38" height="20" rx="10" transform="rotate(-35 71 92)"/><path d="M44 80 l5-6 2 7 5-6" stroke="${E}"/>${ghostShape(50, 14, 1)}`),
-    },
-    possessed: {
-      numeral: 'XV', name: 'The Possessed', plural: ['possessed link', 'possessed links'],
-      meaning: 'Links to one company that now land on another. The tool you wrote about was bought, renamed or taken over.',
-      art: svg(`<path d="M28 106 V54 a22 22 0 0 1 44 0 V106 Z"/><path d="M36 28 l-8-14 M64 28 l8-14"/><ellipse cx="42" cy="64" rx="4" ry="6.5" fill="${E}" stroke="${E}"/><ellipse cx="58" cy="64" rx="4" ry="6.5" fill="${E}" stroke="${E}"/><path d="M40 84 q10 8 20 0" stroke="${E}"/><path d="M18 106 h64"/>`),
-    },
-    chain: {
-      numeral: 'IX', name: 'The Wanderer', plural: ['redirect chain', 'redirect chains'],
-      meaning: 'Links that bounce through several redirects before they arrive. Slower for readers, and search engines trust them less.',
-      art: svg(`<path d="M50 110 c-34 0-40-32-12-36 c24-3 28 20 7 22 c-13 1-13-12-2-13" stroke-dasharray="3 6"/><path d="M50 10 v8"/><path d="M42 18 h16 l4 6 v24 l-4 6 h-16 l-4-6 v-24 z"/><circle cx="50" cy="36" r="6" fill="${E}" stroke="${E}" fill-opacity=".8"/><path d="M38 24 h24 M38 48 h24" opacity=".6"/>`),
-    },
-    nameless: {
-      numeral: '0', name: 'The Nameless', plural: ['nameless page', 'nameless pages'],
-      meaning: 'Pages with no title. Search results and browser tabs have nothing to call them.',
-      art: svg(`<path d="M50 12 c-22 0-32 24-30 50 l-10 48 h80 l-10-48 c2-26-8-50-30-50z" fill="${B}" fill-opacity=".08"/><ellipse cx="50" cy="52" rx="13" ry="18" fill="${D}" stroke-dasharray="4 4"/><path d="M30 80 q20 10 40 0" opacity=".5"/>`),
-    },
-    speechless: {
-      numeral: 'II', name: 'The Silent', plural: ['silent page', 'silent pages'],
-      meaning: 'Pages with no meta description. Search engines will invent one for you.',
-      art: svg(`<path d="M16 62 c10-16 22-16 34-8 c12-8 24-8 34 8 c-12 18-56 18-68 0z" fill="${B}" fill-opacity=".08"/><path d="M16 62 h68"/><path d="M28 54 v16 M39 52 v20 M50 53 v18 M61 52 v20 M72 54 v16" stroke="${E}"/>${ghostShape(50, 14, .55)}`),
-    },
-    'stale-year': {
-      numeral: 'X', name: 'The Stopped Clock', plural: ['stale year', 'stale years'],
-      meaning: 'Copyright lines still stuck in an old year. Visitors notice, and it makes the whole site look abandoned.',
-      art: svg(`<circle cx="50" cy="60" r="32"/><circle cx="50" cy="60" r="26" opacity=".4"/><path d="M50 60 V40 M50 60 l14 9"/><circle cx="50" cy="60" r="2.5" fill="${B}"/><path d="M50 32 v4 M78 60 h-4 M50 88 v-4 M22 60 h4"/><path d="M70 36 l-8 10 7 5 -6 10" stroke="${E}"/><path d="M42 18 h16 M50 18 v10"/>`),
-    },
-    'past-event': {
-      numeral: 'VI', name: 'The Forgotten Feast', plural: ['past event', 'past events'],
-      meaning: 'Invitations to events whose date has already passed. The party ended, but the invite is still up.',
-      art: svg(`<rect x="22" y="70" width="56" height="32" rx="3"/><path d="M22 80 c8 6 12-4 19 2 s11-4 18 2 s11-6 19 0"/><path d="M50 70 V50"/><path d="M50 46 c-5-7 5-9 0-17 c-4-6 3-8 1-14" stroke="${E}" opacity=".85"/><path d="M8 8 l22 22 M8 8 l28 6 M8 8 l6 28 M14 20 q6 0 8-6 M12 30 q12-2 16-14" opacity=".7"/>`),
-    },
-    locked: {
-      numeral: 'XX', name: 'The Locked Door', plural: ['locked door', 'locked doors'],
-      meaning: "Links on sites that block bots, so the spirits couldn't get in. Open the ones that matter yourself.",
-      art: svg(`<path d="M26 108 V48 a24 24 0 0 1 48 0 V108 Z" fill="${B}" fill-opacity=".06"/><path d="M42 30 V108 M58 30 V108" opacity=".45"/><circle cx="64" cy="76" r="4.5" fill="${E}" stroke="${E}"/><path d="M64 80 l-3 11 h6 z" fill="${E}" stroke="${E}"/><path d="M16 108 h68"/>`),
-    },
+    dead: { name: 'The Departed', plural: ['dead link', 'dead links'],
+      meaning: 'Links to pages that no longer exist. Anyone who clicks them hits a dead end.' },
+    possessed: { name: 'The Possessed', plural: ['possessed link', 'possessed links'],
+      meaning: 'Links to one company that now land on another. The tool you wrote about was bought, renamed or taken over.' },
+    chain: { name: 'The Wanderer', plural: ['redirect chain', 'redirect chains'],
+      meaning: 'Links that wander through several redirects before they arrive. Slower for readers, and search engines trust them less.' },
+    nameless: { name: 'The Nameless', plural: ['nameless page', 'nameless pages'],
+      meaning: 'Pages with no title. Search results and browser tabs have nothing to call them.' },
+    speechless: { name: 'The Silent', plural: ['silent page', 'silent pages'],
+      meaning: 'Pages with no meta description. Search engines will invent one for you.' },
+    'stale-year': { name: 'The Stopped Clock', plural: ['stale year', 'stale years'],
+      meaning: 'Copyright lines stuck in an old year. Visitors notice, and it makes the whole house look abandoned.' },
+    'past-event': { name: 'The Forgotten Feast', plural: ['past event', 'past events'],
+      meaning: 'Invitations to events whose date has passed. The party ended, but the invitation is still on the door.' },
+    locked: { name: 'The Locked Door', plural: ['locked door', 'locked doors'],
+      meaning: "Links on sites that block bots, so the spirits couldn't get in. Open the ones that matter yourself." },
   };
+  const ART = window.GSArt;
   const ORDER = ['dead', 'possessed', 'past-event', 'stale-year', 'nameless', 'chain', 'speechless', 'locked'];
   const WEIGHT = { dead: 10, possessed: 6, chain: 4, nameless: 6, speechless: 3, 'stale-year': 5, 'past-event': 7, locked: 0 };
   const ghostScore = (g) => Math.round((WEIGHT[g.type] || 0) * Math.min(1 + (g.foundOn.length - 1) * 0.25, 3));
@@ -97,48 +71,19 @@
   setBoring(store.get('gs:boring', false));
 
   // ---------- The board ----------
-  const POS = {};
-  const arc = (chars, cx, cy, rx, ry, a0, a1) => chars.split('').forEach((c, i) => {
-    const deg = a0 + ((a1 - a0) * i) / (chars.length - 1);
-    const a = (deg * Math.PI) / 180;
-    POS[c] = { x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a), r: deg + 90 };
-  });
-  arc('ABCDEFGHIJKLM', 50, 79, 41, 47, 200, 340);
-  arc('NOPQRSTUVWXYZ', 50, 87, 33, 36, 206, 334);
-  '1234567890'.split('').forEach((c, i) => { POS[c] = { x: 30 + i * 4.4, y: 73, r: 0 }; });
-  POS.YES = { x: 13, y: 12, r: 0 };
-  POS.NO = { x: 87, y: 12, r: 0 };
-  POS.GOODBYE = { x: 50, y: 82, r: 0 };
-  const REST = { x: 50, y: 58 };
-
-  const letters = $('letters');
-  const spans = {};
-  for (const [k, p] of Object.entries(POS)) {
-    const s = document.createElement('span');
-    s.textContent = k === 'GOODBYE' ? 'Good Bye' : k === 'YES' ? 'Yes' : k === 'NO' ? 'No' : k;
-    s.className = /\d/.test(k) ? 'num' : k.length > 1 ? 'word' : '';
-    s.style.left = p.x + '%';
-    s.style.top = p.y + '%';
-    s.style.setProperty('--r', p.r + 'deg');
-    letters.appendChild(s);
-    spans[k] = s;
-  }
-  [['☼', 5, 22], ['☾', 95, 22]].forEach(([g, x, y]) => {
-    const s = document.createElement('span');
-    s.textContent = g; s.className = g === '☼' ? 'sun' : 'moon';
-    s.style.left = x + '%'; s.style.top = y + '%';
-    letters.appendChild(s);
-  });
-
+  const POS = ART.POS;
+  $('board').innerHTML = ART.board();
+  document.querySelectorAll('.candle').forEach((c) => { c.innerHTML = ART.candle(c.classList.contains('tall') ? 160 : 128); });
   const planchette = $('planchette');
+  const glyph = {};
+  document.querySelectorAll('#board .glyph').forEach((g) => { glyph[g.dataset.k] = g; });
   let lit = null;
   const moveTo = (key) => {
-    const p = key && POS[key] ? POS[key] : REST;
-    planchette.style.left = p.x + '%';
-    planchette.style.top = p.y + '%';
-    planchette.style.setProperty('--tilt', (key ? (Math.random() * 14 - 7) : 0) + 'deg');
+    const p = key && POS[key] ? POS[key] : ART.REST;
+    const tilt = key ? Math.random() * 14 - 7 : 0;
+    planchette.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${tilt}deg)`;
     if (lit) lit.classList.remove('lit');
-    lit = key ? spans[key] : null;
+    lit = key ? glyph[key] : null;
     if (lit) lit.classList.add('lit');
     if (key) sounds.tick();
   };
@@ -296,25 +241,32 @@
       ? `${rankOf(score)}. ${left} ghost${left === 1 ? '' : 's'} walk the ${r.pagesScanned} rooms we visited${state.banished.size ? `, and you've banished ${state.banished.size}` : ''}.`
       : `At peace. We visited ${r.pagesScanned} rooms and checked ${r.linksChecked.toLocaleString()} doors.`;
     const pct = state.initialScore ? score / state.initialScore : 0;
-    $('wax').style.height = (score ? Math.max(8, pct * 100) : 4) + '%';
-    $('tallCandle').classList.toggle('out', score === 0);
+    const h = score ? Math.max(14, pct * 170) : 8;
+    const m = $('meter');
+    if (!m.firstChild) m.innerHTML = ART.meter();
+    const body = m.querySelector('.body');
+    body.style.y = (196 - h) + 'px';
+    body.style.height = h + 'px';
+    m.querySelector('.top').style.transform = `translateY(${170 - h}px)`;
+    m.classList.toggle('out', score === 0);
     $('unrestCap').textContent = score ? `Unrest ${score}` : 'The candle is out';
   };
 
+  const cardBackSvg = ART.cardBack();
   const cardHtml = (t) => {
     const a = ARCANA[t];
     const n = t === 'locked' ? state.result.ghosts.filter((g) => g.type === t).length : alive(t).length;
-    return `<button class="tarot" type="button" data-t="${t}" aria-label="${esc(a.name)}: ${n}">
-      <span class="face back"></span>
-      <span class="face front"><span class="numeral">${a.numeral}</span><span class="art">${a.art}</span><span class="name">${esc(a.name)}</span></span>
-      <span class="count">${n}</span>
+    return `<button class="tarot" type="button" data-t="${t}" aria-label="${esc(a.name)}, ${n}">
+      <span class="face back">${cardBackSvg}</span>
+      <span class="face front">${ART.cardFront(t, a.name)}</span>
+      <span class="coin">${n}</span>
     </button>`;
   };
 
   const paintSpread = () => {
     const spread = $('spread');
     spread.innerHTML = typesPresent().map(cardHtml).join('');
-    spread.style.setProperty('--n', String(Math.max(typesPresent().length, 3)));
+    spread.style.setProperty('--n', String(Math.max(typesPresent().length, 4)));
     [...spread.children].forEach((el, i) => {
       el.style.animationDelay = (reduceMotion ? 0 : i * 140) + 'ms';
       const t = el.dataset.t;
@@ -405,7 +357,7 @@
       const card = $('spread').querySelector(`[data-t="${t}"]`);
       if (card) {
         const n = alive(t).length;
-        card.querySelector('.count').textContent = n;
+        card.querySelector('.coin').textContent = n;
         card.classList.toggle('rested', n === 0);
       }
       paintCardReading();
@@ -463,63 +415,68 @@
   };
   $('share').onclick = async () => {
     const r = state.result;
-    try { await Promise.all([document.fonts.load('700 40px Cinzel'), document.fonts.load('700 40px "Cinzel Decorative"'), document.fonts.load('24px "Atkinson Hyperlegible"')]); } catch {}
+    try { await Promise.all(['56px "Fell SC"', '56px Fell', 'italic 500 30px Cormorant', '22px Atkinson'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630;
-    const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const x = c.getContext('2d');
-    const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2b0d1a'); bg.addColorStop(1, '#14060d');
-    x.fillStyle = bg; x.fillRect(0, 0, W, H);
-    const glow = x.createRadialGradient(820, 300, 40, 820, 300, 520);
-    glow.addColorStop(0, 'rgba(217,164,65,.28)'); glow.addColorStop(1, 'rgba(217,164,65,0)');
-    x.fillStyle = glow; x.fillRect(0, 0, W, H);
-    x.strokeStyle = 'rgba(217,164,65,.5)'; x.lineWidth = 2; roundRect(x, 24, 24, W - 48, H - 48, 18); x.stroke();
+    const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+    const x = c.getContext('2d'); x.scale(2, 2);
 
-    // words
+    // The room
+    const bg = x.createRadialGradient(780, 300, 40, 700, 320, 760);
+    bg.addColorStop(0, '#3a2414'); bg.addColorStop(.55, '#1c120c'); bg.addColorStop(1, '#0b0705');
+    x.fillStyle = bg; x.fillRect(0, 0, W, H);
+    const grainImg = await loadSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(#n)" opacity=".5"/></svg>`);
+    if (grainImg) { x.globalAlpha = .06; x.drawImage(grainImg, 0, 0, W, H); x.globalAlpha = 1; }
+    x.strokeStyle = 'rgba(201,151,63,.45)'; x.lineWidth = 1.5; roundRect(x, 26, 26, W - 52, H - 52, 6); x.stroke();
+    x.strokeStyle = 'rgba(201,151,63,.2)'; roundRect(x, 34, 34, W - 68, H - 68, 4); x.stroke();
+
+    // The words
     const host = hostOf(r.site);
     const left = visible().length;
-    x.fillStyle = '#c9b498'; x.font = '500 30px Cinzel, Georgia, serif'; x.textAlign = 'left';
-    x.fillText('A reading for', 72, 140);
-    x.fillStyle = '#f1e6d2';
-    let size = 64; x.font = `700 ${size}px Cinzel, Georgia, serif`;
-    while (x.measureText(host).width > 470 && size > 30) { size -= 2; x.font = `700 ${size}px Cinzel, Georgia, serif`; }
-    x.fillText(host, 72, 214);
-    x.fillStyle = '#9fe8c6'; x.font = '700 40px Cinzel, Georgia, serif';
-    x.fillText(left ? `${left} ghost${left === 1 ? '' : 's'} found` : 'At peace', 72, 300);
-    x.fillStyle = '#d9a441'; x.font = '500 30px Cinzel, Georgia, serif';
-    x.fillText(left ? `The verdict: ${rankOf(currentScore())}` : 'The spirits rest', 72, 348);
-    x.fillStyle = '#c9b498'; x.font = '22px "Atkinson Hyperlegible", system-ui, sans-serif';
+    x.textAlign = 'left';
+    x.fillStyle = '#cdb994'; x.font = 'italic 500 34px Cormorant, Georgia, serif';
+    x.fillText('A reading for', 80, 150);
+    x.fillStyle = '#ece0c8';
+    let size = 70; x.font = `${size}px Fell, Georgia, serif`;
+    while (x.measureText(host).width > 480 && size > 30) { size -= 2; x.font = `${size}px Fell, Georgia, serif`; }
+    x.fillText(host, 80, 224);
+    x.fillStyle = '#c9973f'; x.fillRect(80, 252, 64, 1.5);
+    x.fillStyle = '#a6ecd0'; x.font = '46px "Fell SC", Fell, Georgia, serif';
+    x.fillText(left ? `${left} ghost${left === 1 ? '' : 's'} found` : 'At peace', 80, 316);
+    x.fillStyle = '#cdb994'; x.font = 'italic 500 30px Cormorant, Georgia, serif';
+    x.fillText(left ? `The verdict: ${rankOf(currentScore()).toLowerCase()}.` : 'The spirits rest.', 80, 360);
     const top = ORDER.filter((t) => t !== 'locked' && alive(t).length).sort((a, b) => alive(b).length - alive(a).length).slice(0, 3);
-    top.forEach((t, i) => x.fillText(kinds(alive(t).length, t), 72, 410 + i * 34));
-    x.fillStyle = 'rgba(241,230,210,.7)'; x.font = '20px "Atkinson Hyperlegible", system-ui, sans-serif';
-    x.fillText('Hold your own séance: github.com/raoashwini21/graveyard-shift', 72, 560);
+    x.fillStyle = '#a8977b'; x.font = '21px Atkinson, system-ui, sans-serif';
+    top.forEach((t, i) => x.fillText(kinds(alive(t).length, t), 80, 418 + i * 32));
+    x.fillStyle = 'rgba(236,224,200,.6)'; x.font = '19px Atkinson, system-ui, sans-serif';
+    x.fillText('Hold your own séance: github.com/raoashwini21/graveyard-shift', 80, 566);
 
-    // cards
+    // The spread
     const cards = (top.length ? top : ['locked']).slice(0, 3);
-    const arts = await Promise.all(cards.map((t) => loadSvg(ARCANA[t].art)));
-    const cw = 190, ch = 326;
-    const centers = cards.length === 1 ? [835] : cards.length === 2 ? [735, 935] : [645, 835, 1025];
-    const angles = cards.length === 1 ? [0] : cards.length === 2 ? [-6, 6] : [-9, 0, 9];
+    const imgs = await Promise.all(cards.map((t) => loadSvg(ART.cardFront(t, ARCANA[t].name, false))));
+    const cw = 176, ch = 302;
+    const centers = cards.length === 1 ? [875] : cards.length === 2 ? [780, 980] : [688, 874, 1060];
+    const ys = cards.length === 3 ? [326, 302, 326] : [314, 314];
+    const angles = cards.length === 1 ? [0] : cards.length === 2 ? [-5, 5] : [-8, 0, 8];
     cards.forEach((t, i) => {
       x.save();
-      x.translate(centers[i], 320);
+      x.translate(centers[i], ys[i]);
       x.rotate((angles[i] * Math.PI) / 180);
-      x.shadowColor = 'rgba(0,0,0,.6)'; x.shadowBlur = 30; x.shadowOffsetY = 16;
-      const cg = x.createLinearGradient(0, -ch / 2, 0, ch / 2); cg.addColorStop(0, '#2a0f1c'); cg.addColorStop(1, '#160610');
-      x.fillStyle = cg; roundRect(x, -cw / 2, -ch / 2, cw, ch, 12); x.fill();
+      x.shadowColor = 'rgba(0,0,0,.65)'; x.shadowBlur = 36; x.shadowOffsetY = 18;
+      x.fillStyle = '#e8d8b2'; roundRect(x, -cw / 2, -ch / 2, cw, ch, 10); x.fill();
       x.shadowColor = 'transparent';
-      x.strokeStyle = '#d9a441'; x.lineWidth = 3; roundRect(x, -cw / 2, -ch / 2, cw, ch, 12); x.stroke();
-      x.strokeStyle = 'rgba(217,164,65,.4)'; x.lineWidth = 1; roundRect(x, -cw / 2 + 8, -ch / 2 + 8, cw - 16, ch - 16, 8); x.stroke();
-      x.fillStyle = '#d9a441'; x.textAlign = 'center'; x.font = '500 20px Cinzel, Georgia, serif';
-      x.fillText(ARCANA[t].numeral, 0, -ch / 2 + 36);
-      if (arts[i]) x.drawImage(arts[i], -66, -112, 132, 158);
-      x.fillStyle = '#f1e6d2';
-      let fs = 19; x.font = `700 ${fs}px Cinzel, Georgia, serif`;
-      while (x.measureText(ARCANA[t].name).width > cw - 30 && fs > 12) { fs--; x.font = `700 ${fs}px Cinzel, Georgia, serif`; }
-      x.fillText(ARCANA[t].name, 0, ch / 2 - 30);
+      if (imgs[i]) x.drawImage(imgs[i], -cw / 2, -ch / 2, cw, ch);
+      x.fillStyle = '#2a1a10'; x.textAlign = 'center';
+      x.font = '19px "Fell SC", Fell, Georgia, serif';
+      x.fillText(ART.NUMERAL[t], 0, -ch / 2 + 36);
+      let fs = 20; x.font = `${fs}px "Fell SC", Fell, Georgia, serif`;
+      while (x.measureText(ARCANA[t].name).width > cw - 54 && fs > 12) { fs--; x.font = `${fs}px "Fell SC", Fell, Georgia, serif`; }
+      x.fillText(ARCANA[t].name, 0, ch / 2 - 27);
       const n = t === 'locked' ? r.lockedCount : alive(t).length;
-      x.fillStyle = '#9fe8c6'; x.beginPath(); x.arc(cw / 2 - 6, -ch / 2 + 6, 24, 0, Math.PI * 2); x.fill();
-      x.fillStyle = '#0d2a20'; x.font = '700 22px "Atkinson Hyperlegible", system-ui, sans-serif';
-      x.fillText(String(n), cw / 2 - 6, -ch / 2 + 14);
+      const coin = x.createRadialGradient(cw / 2 - 12, -ch / 2 + 2, 2, cw / 2 - 8, -ch / 2 + 8, 26);
+      coin.addColorStop(0, '#f0cf86'); coin.addColorStop(1, '#a8761f');
+      x.fillStyle = coin; x.beginPath(); x.arc(cw / 2 - 8, -ch / 2 + 8, 25, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#2a1a10'; x.font = '23px "Fell SC", Fell, Georgia, serif';
+      x.fillText(String(n), cw / 2 - 8, -ch / 2 + 16);
       x.restore();
     });
     c.toBlob((b) => b && download(b, `seance-${host}.png`), 'image/png');
