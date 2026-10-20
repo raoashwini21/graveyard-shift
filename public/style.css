@@ -567,3 +567,14 @@ body.speaking .door .beyond-light { opacity: 1; }
   .altar .dial-slot { width: 96px; }
   .lede { font-size: 15px; padding: 10px 4px; }
 }
+
+/* ================= The real hallway (WebGL) ================= */
+body.three .hall { inset: 0; transform: none; }
+body.three .hall canvas { display: block; width: 100% !important; height: 100% !important; }
+body.three .fog, body.three .candle-light, body.three .grain { display: none; }
+body.three .vignette { background: none; }
+body.three body.felt .hall, body.three.felt .hall { filter: none; }
+body.three .hall { filter: none !important; }
+body.three .door .doorway, body.three .door .plaque, body.three .door .threshold { visibility: hidden; }
+body.three .door::after { display: none; }
+body.three .ghost-layer { mix-blend-mode: screen; filter: blur(.4px) drop-shadow(0 0 18px rgba(220,230,255,.35)); opacity: .92; }
