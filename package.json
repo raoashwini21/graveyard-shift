@@ -1,0 +1,23 @@
+{
+  "name": "graveyard-shift",
+  "version": "0.1.0",
+  "description": "Find the ghosts on your website: dead links, redirect chains, stale years and expired events. No API keys.",
+  "main": "src/scan.js",
+  "scripts": {
+    "start": "node server.js",
+    "scan": "node bin/graveyard.js",
+    "test": "node --test test/*.test.js"
+  },
+  "author": "Ashwini Rao",
+  "license": "MIT",
+  "dependencies": {
+    "node-html-parser": "^6.1.13"
+  },
+  "type": "module",
+  "bin": {
+    "graveyard-shift": "bin/graveyard.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

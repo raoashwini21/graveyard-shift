@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graveyard Shift</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0d0f14; color: #d8dbe2; max-width: 760px; margin: 40px auto; padding: 0 16px; }
+  input { width: 70%; padding: 10px; background: #161a22; border: 1px solid #2a3040; color: inherit; border-radius: 6px; }
+  button { padding: 10px 16px; border-radius: 6px; border: 0; background: #e8a33d; color: #111; font-weight: 600; cursor: pointer; }
+  #log { color: #8a90a0; font-size: 14px; min-height: 1.4em; margin: 16px 0; }
+  .g { border: 1px solid #2a3040; border-radius: 8px; padding: 12px; margin: 10px 0; background: #12151c; }
+  .g b { color: #fff; } .g i { color: #c9b8ff; } .g small { color: #8a90a0; display: block; margin-top: 4px; }
+</style>
+</head>
+<body>
+<h1>Graveyard Shift</h1>
+<p>Temporary page to test the scanner. The spooky UI replaces this on Wednesday.</p>
+<form id="f"><input id="u" placeholder="yoursite.com" required> <button>Scan</button></form>
+<div id="log"></div>
+<div id="out"></div>
+<script>
+const f = document.getElementById('f'), log = document.getElementById('log'), out = document.getElementById('out');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+f.onsubmit = (e) => {
+  e.preventDefault();
+  out.innerHTML = ''; log.textContent = 'Lighting the lantern…';
+  const es = new EventSource('/api/scan?url=' + encodeURIComponent(document.getElementById('u').value));
+  es.addEventListener('progress', (m) => {
+    const d = JSON.parse(m.data);
+    if (d.type === 'phase') log.textContent = d.phase + '…';
+    if (d.type === 'page') log.textContent = 'Walking the halls · ' + d.pagesScanned + ' pages';
+    if (d.type === 'link') log.textContent = 'Knocking on doors · ' + d.linksChecked + '/' + d.linksTotal;
+  });
+  es.addEventListener('done', (m) => {
+    es.close();
+    const r = JSON.parse(m.data);
+    log.textContent = r.ghostCount ? r.ghostCount + ' GHOSTS FOUND · score ' + r.score + ' (' + r.rank + ')' : 'Your site is at peace.';
+    out.innerHTML = r.ghosts.map((g) => '<div class="g"><b>' + esc(g.name) + '</b> <i>' + esc(g.label) + '</i>' +
+      '<small>' + esc(g.quote ? '"' + g.quote + '"' : g.url) + '</small><small>Fix: ' + esc(g.fix) + '</small></div>').join('');
+  });
+  es.addEventListener('fail', (m) => { es.close(); log.textContent = JSON.parse(m.data).message; });
+  es.onerror = () => { es.close(); if (!out.innerHTML) log.textContent = 'Lost the connection to the scanner.'; };
+};
+</script>
+</body>
+</html>

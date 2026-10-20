@@ -1,0 +1,243 @@
+// The scan: find pages (sitemap first, then by following internal links),
+// run the page checks, check every link, and turn it all into ghosts.
+
+import { createHash } from 'node:crypto';
+import { createFetcher } from './fetcher.js';
+import { parseRobots } from './robots.js';
+import { analyzePage } from './checks.js';
+import { GHOST_TYPES, describe, scoreGhosts, sortGhosts } from './ghosts.js';
+
+export const DEFAULTS = {
+  maxPages: 50,
+  maxLinks: 500,
+  external: false,
+  concurrency: 4,
+  delayMs: 150,
+  timeoutMs: 10000,
+  allowPrivate: true,
+  respectRobots: true,
+  quietPaths: ['/blog/', '/news/', '/archive/', '/press/', '/changelog'],
+  ignore: [],
+};
+
+const NON_PAGE = /\.(pdf|jpe?g|png|gif|webp|svg|ico|zip|gz|mp4|mp3|mov|webm|css|js|json|xml|txt|csv|docx?|xlsx?|pptx?)(\?|$)/i;
+
+const stripWww = (h) => h.replace(/^www\./, '');
+const ghostId = (type, key) => createHash('sha1').update(`${type}|${key}`).digest('hex').slice(0, 12);
+
+function normalizeStart(input) {
+  let s = String(input || '').trim();
+  if (!/^https?:\/\//i.test(s)) s = 'https://' + s;
+  const u = new URL(s);
+  u.hash = '';
+  return u.href;
+}
+
+async function pool(items, limit, fn) {
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      await fn(items[idx], idx);
+    }
+  });
+  await Promise.all(workers);
+}
+
+function decodeXml(s) {
+  return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").trim();
+}
+
+export async function scan(startInput, options = {}, onEvent = () => {}) {
+  const opts = { ...DEFAULTS, ...options };
+  const now = opts.now ? new Date(opts.now) : new Date();
+  const f = createFetcher(opts);
+  const emit = (e) => { try { onEvent(e); } catch {} };
+  const ignored = (url) => opts.ignore.some((p) => url.includes(p));
+
+  const start = normalizeStart(startInput);
+  emit({ type: 'phase', phase: 'knocking', url: start });
+
+  // Land on the real home page first (http→https, apex→www, etc.)
+  const home = await f.follow(start, { readBody: true });
+  if (home.error || !home.status || home.status >= 400) {
+    const why = {
+      ENOTFOUND: 'no website exists at that address',
+      ECONNREFUSED: 'the site refused the connection',
+      timeout: 'the site took too long to answer',
+      blocked: 'private network addresses are not allowed here',
+    }[home.error] || (home.error ? home.error : `it answered with status ${home.status}`);
+    throw new Error(`Couldn't open ${start}: ${why}.`);
+  }
+  const homeUrl = home.finalUrl;
+  const origin = new URL(homeUrl);
+  const siteHost = stripWww(origin.hostname);
+  const sameSite = (url) => { try { return stripWww(new URL(url).hostname) === siteHost; } catch { return false; } };
+
+  // robots.txt
+  let robots = parseRobots('');
+  const rob = await f.follow(`${origin.origin}/robots.txt`, { readBody: true });
+  if (rob.status === 200 && rob.body && !/<html/i.test(rob.body)) robots = parseRobots(rob.body);
+  const allowed = (url) => {
+    if (!opts.respectRobots || !sameSite(url)) return true;
+    const u = new URL(url);
+    return robots.isAllowed(u.pathname + u.search);
+  };
+
+  // Sitemap
+  emit({ type: 'phase', phase: 'reading the map' });
+  const fromSitemap = [];
+  const sitemapQueue = robots.sitemaps.length ? [...robots.sitemaps] : [`${origin.origin}/sitemap.xml`];
+  const sitemapSeen = new Set();
+  while (sitemapQueue.length && sitemapSeen.size < 10 && fromSitemap.length < opts.maxPages * 3) {
+    const sm = sitemapQueue.shift();
+    if (sitemapSeen.has(sm)) continue;
+    sitemapSeen.add(sm);
+    const r = await f.follow(sm, { readBody: true });
+    if (r.status !== 200 || !r.body) continue;
+    const locs = [...r.body.matchAll(/<loc>([\s\S]*?)<\/loc>/gi)].map((m) => decodeXml(m[1]));
+    if (/<sitemapindex/i.test(r.body)) sitemapQueue.push(...locs);
+    else fromSitemap.push(...locs.filter(sameSite));
+  }
+
+  // Crawl pages in waves
+  const linkResults = new Map(); // url -> follow() result, so we don't fetch twice
+  const linksFound = new Map(); // url -> Set(pages it appears on)
+  const findings = [];
+  const visited = new Set();
+  const pages = [];
+  let robotsSkipped = 0;
+
+  linkResults.set(start, home);
+  linkResults.set(homeUrl, home);
+  let frontier = [homeUrl, ...fromSitemap];
+  const sitemapSet = new Set(fromSitemap);
+
+  const crawlPage = async (url) => {
+    let r = linkResults.get(url);
+    if (!r || r.body === undefined) {
+      r = await f.follow(url, { readBody: true });
+      linkResults.set(url, r);
+    }
+    emit({ type: 'page', url, pagesScanned: pages.length + 1 });
+    if (r.error || r.status >= 400) {
+      // A page the sitemap promises but can't deliver is a ghost too.
+      if (sitemapSet.has(url)) {
+        const set = linksFound.get(url) || new Set();
+        set.add('sitemap.xml');
+        linksFound.set(url, set);
+      }
+      return;
+    }
+    if (!/html/i.test(r.contentType || '') || !r.body) return;
+    const finalUrl = r.finalUrl || url;
+    if (!sameSite(finalUrl)) return;
+    visited.add(finalUrl);
+    pages.push(finalUrl);
+    const a = analyzePage(r.body, finalUrl, { now, quietPaths: opts.quietPaths });
+    for (const fd of a.findings) findings.push({ ...fd, page: finalUrl });
+    for (const link of a.links) {
+      if (ignored(link)) continue;
+      const set = linksFound.get(link) || new Set();
+      set.add(finalUrl);
+      linksFound.set(link, set);
+    }
+  };
+
+  while (frontier.length && pages.length < opts.maxPages) {
+    const batch = [];
+    for (const url of frontier) {
+      if (batch.length + pages.length >= opts.maxPages) break;
+      if (visited.has(url) || NON_PAGE.test(url) || !sameSite(url) || ignored(url)) continue;
+      visited.add(url);
+      if (!allowed(url)) { robotsSkipped++; continue; }
+      batch.push(url);
+    }
+    if (!batch.length) break;
+    emit({ type: 'phase', phase: 'walking the halls' });
+    await pool(batch, opts.concurrency, crawlPage);
+    frontier = [...linksFound.keys()].filter((u) => sameSite(u) && !visited.has(u));
+  }
+  const capped = frontier.some((u) => !visited.has(u) && !NON_PAGE.test(u));
+
+  // Check every link
+  let toCheck = [...linksFound.keys()].filter((u) => (opts.external || sameSite(u)) && allowed(u));
+  const linksCapped = toCheck.length > opts.maxLinks;
+  toCheck = toCheck.slice(0, opts.maxLinks);
+  emit({ type: 'phase', phase: 'knocking on every door', linksTotal: toCheck.length });
+
+  const ghosts = new Map();
+  const addGhost = (type, key, foundOn, extra = {}) => {
+    const id = ghostId(type, key);
+    const existing = ghosts.get(id);
+    if (existing) {
+      for (const p of foundOn) if (!existing.foundOn.includes(p)) existing.foundOn.push(p);
+      return;
+    }
+    const { label, fix } = describe(type, extra.data);
+    ghosts.set(id, {
+      id,
+      type,
+      name: GHOST_TYPES[type].name,
+      confidence: extra.confidence || GHOST_TYPES[type].confidence,
+      url: extra.url || null,
+      foundOn: [...foundOn],
+      label,
+      fix,
+      quote: extra.quote || null,
+      detail: extra.detail || null,
+    });
+  };
+
+  let checked = 0;
+  await pool(toCheck, opts.concurrency, async (url) => {
+    let r = linkResults.get(url);
+    if (!r) { r = await f.follow(url); linkResults.set(url, r); }
+    checked++;
+    emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
+    const foundOn = [...linksFound.get(url)];
+    const g = classifyLink(r);
+    if (g) addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
+  });
+
+  for (const fd of findings) {
+    if (fd.type === 'nameless' || fd.type === 'speechless') {
+      addGhost(fd.type, fd.key, [fd.page], { url: fd.page });
+    } else {
+      addGhost(fd.type, fd.key, [fd.page], { quote: fd.quote, data: fd.data, confidence: fd.confidence, url: fd.page });
+    }
+  }
+
+  const list = sortGhosts([...ghosts.values()]);
+  const real = list.filter((g) => g.type !== 'locked');
+  const result = {
+    site: origin.origin,
+    startUrl: start,
+    scannedAt: now.toISOString(),
+    pagesScanned: pages.length,
+    linksChecked: checked,
+    ghostCount: real.length,
+    lockedCount: list.length - real.length,
+    ...scoreGhosts(list),
+    limits: { pagesCapped: capped, linksCapped, robotsSkipped, maxPages: opts.maxPages, external: opts.external },
+    ghosts: list,
+  };
+  emit({ type: 'done', result });
+  return result;
+}
+
+export function classifyLink(r) {
+  if (['blocked', 'bad-url', 'unsupported'].includes(r.error)) return null;
+  const hops = r.hops?.length || 0;
+  const detail = { status: r.status ?? null, hops: r.hops || [], finalUrl: r.finalUrl, error: r.error || null };
+  if (r.loop) return { type: 'chain', data: { loop: true }, detail };
+  if (r.error) {
+    if (r.error === 'ENOTFOUND') return { type: 'dead', data: { reason: 'dns' }, detail };
+    return { type: 'locked', detail: { ...detail, reason: r.error } };
+  }
+  if (r.status === 404 || r.status === 410) return { type: 'dead', data: { status: r.status }, detail };
+  if (r.status >= 500) return { type: 'dead', data: { status: r.status }, detail };
+  if (r.status >= 400 || r.status === 999) return { type: 'locked', detail: { ...detail, reason: `status ${r.status}` } };
+  if (hops >= 2) return { type: 'chain', data: { hops, finalUrl: r.finalUrl }, detail };
+  return null;
+}
