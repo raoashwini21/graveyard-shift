@@ -127,11 +127,10 @@ window.Haunt = (() => {
     setTimeout(() => document.body.classList.remove('gutter'), ms);
   };
 
-  // The ritual circle shudders.
+  // Somewhere down the hall, a door creaks open by itself.
   const disturb = () => {
     if (!on()) return;
-    const s = $('sigil');
-    s.classList.remove('shudder'); void s.offsetWidth; s.classList.add('shudder');
+    if (window.Hall) Hall.creak();
     gutter(500);
   };
 
@@ -142,12 +141,11 @@ window.Haunt = (() => {
     b.classList.remove('once'); void b.offsetWidth; b.classList.add('once');
   };
 
-  // A face surfaces inside the dial for a moment.
+  // The door opens a crack and something looks out. The portraits look away.
   const reflect = () => {
     if (!on()) return;
-    const g = document.querySelector('.dial-ghost');
-    if (!g) return;
-    g.animate([{ opacity: 0 }, { opacity: 0.26, offset: 0.4 }, { opacity: 0.12, offset: 0.6 }, { opacity: 0.22, offset: 0.7 }, { opacity: 0 }], { duration: 2600, easing: 'ease-in-out' });
+    if (window.Door && Door.current && Door.current.el.isConnected) Door.current.peek();
+    if (window.Hall) Hall.portraits();
   };
 
   // A specter flickers behind a point on screen (used when a dead link is found).
@@ -224,7 +222,7 @@ window.Haunt = (() => {
   const reveal = async ({ count, verdict, host, skip }) => {
     const box = $('revealBox');
     $('revealCount').textContent = count ? count.toLocaleString('en-US') : 'None';
-    $('revealLine').textContent = count ? `ghost${count === 1 ? ' walks' : 's walk'} ${host}` : `walk ${host}`;
+    $('revealLine').textContent = count ? `ghost${count === 1 ? '' : 's'} living in ${host}` : `ghosts in ${host}`;
     $('revealVerdict').textContent = verdict;
     const wait = (ms) => (skip() ? Promise.resolve() : sleep(ms));
     if (!on()) return;
@@ -273,15 +271,16 @@ window.Haunt = (() => {
       every(() => drift({ opacity: 0.2 }), 30000, 50000, 18000);
       every(sweep, 30000, 50000, 14000);
       every(reflect, 18000, 34000, 9000);
-      every(disturb, 28000, 55000);
+      every(disturb, 7000, 14000, 4000);
       every(shade, 40000, 70000, 24000);
     } else if (name === 'scan') {
       every(() => drift({ opacity: 0.11, duration: rand(14000, 18000) }), 16000, 26000, 6000);
-      every(disturb, 12000, 22000, 8000);
+      every(disturb, 2500, 5000, 1500);
     } else if (name === 'report') {
       every(() => drift({ opacity: 0.09, height: rand(36, 48) }), 40000, 70000, 12000);
       every(shade, 50000, 80000, 30000);
       every(() => gutter(600), 20000, 40000);
+      every(() => window.Hall && Hall.creak(2200), 9000, 18000, 5000);
     }
   };
 

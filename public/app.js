@@ -27,21 +27,29 @@
 
   // ---------- The kinds of ghost ----------
   const KINDS = {
-    dead: { n: 'XIII', name: 'The Departed', one: 'dead link', many: 'dead links', color: '#a03a3a',
-      meaning: 'Links to pages that no longer exist. Every reader who clicks one hits a dead end.' },
-    possessed: { n: 'XV', name: 'The Possessed', one: 'link taken over', many: 'links taken over', color: '#b5603f',
-      meaning: 'Links to one company that now land on another. The product you wrote about was bought, renamed or shut down.' },
-    'past-event': { n: 'VI', name: 'The Forgotten Feast', one: 'expired invitation', many: 'expired invitations', color: '#e0a35a',
-      meaning: 'Invitations to events whose date has passed. The party ended; the invitation is still on the door.' },
-    'stale-year': { n: 'X', name: 'The Stopped Clock', one: 'stale year', many: 'stale years', color: '#bf9a5f',
-      meaning: 'Copyright lines stuck in an old year. Small, but it makes the whole house look abandoned.' },
-    nameless: { n: '0', name: 'The Nameless', one: 'page without a title', many: 'pages without a title', color: '#8c7f6c',
+    dead: { n: 'XIII', name: 'The Departed', one: 'dead link', many: 'dead links', color: '#c2474a', stamp: 'Deceased',
+      epitaph: 'Here lies a link. It led nowhere.',
+      meaning: 'Links to pages that no longer exist. Every click is a reader walking into a wall.' },
+    possessed: { n: 'XV', name: 'The Possessed', one: 'hijacked link', many: 'hijacked links', color: '#d0703f', stamp: 'Possessed',
+      epitaph: 'You linked to a friend. Something else answers now.',
+      meaning: 'Links to one company that now land on another. The tool you recommended was bought, renamed or shut down, and your readers end up on a stranger\'s site.' },
+    'past-event': { n: 'VI', name: 'The Forgotten Feast', one: 'expired invitation', many: 'expired invitations', color: '#e0a35a', stamp: 'Expired',
+      epitaph: 'The party ended. The invitation is still on the door.',
+      meaning: 'Events whose date has passed, still inviting people in. Nothing says nobody lives here like last year\'s webinar.' },
+    'stale-year': { n: 'X', name: 'The Stopped Clock', one: 'frozen year', many: 'frozen years', color: '#c9a060', stamp: 'Stopped',
+      epitaph: 'Every clock in this room stopped the same year.',
+      meaning: 'Copyright lines stuck in an old year. Tiny, but it makes the whole house look abandoned.' },
+    nameless: { n: '0', name: 'The Nameless', one: 'page without a title', many: 'pages without a title', color: '#a493b5', stamp: 'Nameless',
+      epitaph: 'Buried without a name. Google can\'t call it anything either.',
       meaning: 'Pages with no title. Search results and browser tabs have nothing to call them.' },
-    chain: { n: 'IX', name: 'The Wanderer', one: 'redirect chain', many: 'redirect chains', color: '#6f655a',
-      meaning: 'Links that pass through several redirects before arriving. Slower for readers, weaker for search.' },
-    speechless: { n: 'II', name: 'The Silent', one: 'page without a description', many: 'pages without a description', color: '#57504a',
-      meaning: 'Pages with no meta description. Search engines will write one for you, usually badly.' },
-    locked: { n: 'XX', name: 'The Locked Door', one: 'unverified link', many: 'unverified links', color: 'transparent',
+    chain: { n: 'IX', name: 'The Wanderer', one: 'redirect chain', many: 'redirect chains', color: '#8fa7b8', stamp: 'Lost',
+      epitaph: 'Took the long way round. Then took it again.',
+      meaning: 'Links that bounce through several redirects before arriving. Slower for readers, weaker for search.' },
+    speechless: { n: 'II', name: 'The Silent', one: 'page without a description', many: 'pages without a description', color: '#8d8597', stamp: 'Mute',
+      epitaph: 'Says nothing to strangers. Google fills the silence, badly.',
+      meaning: 'Pages with no meta description. Search engines will write one for you, and you won\'t like it.' },
+    locked: { n: 'XX', name: 'The Locked Door', one: 'unverified link', many: 'unverified links', color: 'transparent', stamp: 'Locked',
+      epitaph: 'Something is behind this door. It won\'t let bots in.',
       meaning: 'Links on sites that turn bots away, so they could not be checked. Open the ones that matter yourself.' },
   };
   const ORDER = ['dead', 'possessed', 'past-event', 'stale-year', 'nameless', 'chain', 'speechless', 'locked'];
@@ -50,13 +58,13 @@
   const rankOf = (s) => (s === 0 ? 'At peace' : s <= 20 ? 'Restless' : s <= 50 ? 'Haunted' : s <= 100 ? 'Infested' : 'Cursed');
   const count = (n, t) => `${fmt(n)} ${n === 1 ? KINDS[t].one : KINDS[t].many}`;
   const WHISPERS = {
-    dead: (u) => `Something has died at ${u}.`,
-    possessed: (u) => `${u} answers in another voice.`,
-    'past-event': () => 'An old invitation is still on the door.',
+    dead: (u) => `Something died at ${u}.`,
+    possessed: (u) => `${u} answers in a stranger's voice.`,
+    'past-event': () => 'The party ended. The invitation is still up.',
     'stale-year': () => 'A clock in this house stopped years ago.',
     nameless: (u) => `A room with no name: ${u}.`,
-    chain: (u) => `Footsteps wander from ${u}.`,
-    speechless: (u) => `${u} will not speak.`,
+    chain: (u) => `Footsteps wander off from ${u}.`,
+    speechless: (u) => `${u} won't say a word.`,
   };
 
   // ---------- Sound (off by default, synthesised, quiet) ----------
@@ -82,6 +90,8 @@
     restore: () => tone(330, 0.9, 0.04, 196),
     scare: () => { tone(46, 0.9, 0.3, 30, 'sawtooth'); tone(1900, 0.35, 0.03, 900); },
     hush: () => tone(40, 2.4, 0.12, 32),
+    knock: () => { tone(120, 0.12, 0.12, 70, 'triangle'); setTimeout(() => tone(110, 0.12, 0.1, 65, 'triangle'), 170); },
+    creak: () => { tone(180 + Math.random() * 60, 0.7, 0.012, 260 + Math.random() * 80, 'sawtooth'); },
     lit: () => { tone(82, 2.4, 0.2, 55); tone(330, 1.8, 0.03, 247); tone(494, 2.2, 0.015, 370); },
   };
   Haunt.onSound((name) => sfx[name] && sfx[name]());
@@ -97,31 +107,7 @@
   plainBtn.onclick = () => setPlain(!isPlain());
   setPlain(store.get('gs:plain', false));
 
-  // ---------- The chamber: arcane circle, embers, parallax ----------
-  (() => {
-    const c = 500;
-    const p = [];
-    [480, 470, 380, 300, 292, 200, 120].forEach((r, i) => p.push(`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#ebe3d3" stroke-width="${i % 2 ? .6 : 1.2}"/>`));
-    for (let i = 0; i < 72; i++) {
-      const a = (i * 5 * Math.PI) / 180, r1 = 470, r2 = i % 6 ? 458 : 440;
-      p.push(`<line x1="${c + Math.cos(a) * r1}" y1="${c + Math.sin(a) * r1}" x2="${c + Math.cos(a) * r2}" y2="${c + Math.sin(a) * r2}" stroke="#ebe3d3" stroke-width=".8"/>`);
-    }
-    const star = (n, r) => Array.from({ length: n }, (_, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return `${c + Math.cos(a) * r},${c + Math.sin(a) * r}`; });
-    const s7 = star(7, 380);
-    p.push(`<polygon points="${s7.filter((_, i) => true).map((_, i) => s7[(i * 3) % 7]).join(' ')}" fill="none" stroke="#ebe3d3" stroke-width=".8"/>`);
-    p.push(`<polygon points="${star(7, 292).join(' ')}" fill="none" stroke="#ebe3d3" stroke-width=".6"/>`);
-    for (let i = 0; i < 7; i++) {
-      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 7;
-      p.push(`<circle cx="${c + Math.cos(a) * 425}" cy="${c + Math.sin(a) * 425}" r="14" fill="none" stroke="#ebe3d3" stroke-width=".8"/><circle cx="${c + Math.cos(a) * 425 + 5}" cy="${c + Math.sin(a) * 425}" r="11" fill="#0a0909"/>`);
-    }
-    $('sigil').innerHTML = `<svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">${p.join('')}</svg>`;
-    if (!reduceMotion) {
-      window.addEventListener('pointermove', (e) => {
-        const x = (e.clientX / innerWidth - .5) * -18, y = (e.clientY / innerHeight - .5) * -14;
-        $('sigil').style.setProperty('--px', x + 'px'); $('sigil').style.setProperty('--py', y + 'px');
-      }, { passive: true });
-    }
-  })();
+  // ---------- Dust in the candlelight ----------
   (() => {
     if (reduceMotion) return;
     const cv = $('embers'); const ctx = cv.getContext('2d');
@@ -145,92 +131,22 @@
     requestAnimationFrame(tick);
   })();
 
-  // ---------- The spirit dial ----------
-  const C = 260;
-  const POS = {};
-  const PROG_R = 247;
-  const PROG_LEN = 2 * Math.PI * PROG_R;
-  const dial = (() => {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    const parts = [`<defs><radialGradient id="lensHalo"><stop offset="0" stop-color="#e0a35a" stop-opacity=".35"/><stop offset="1" stop-color="#e0a35a" stop-opacity="0"/></radialGradient></defs>`];
-    parts.push(`<circle class="ring" cx="${C}" cy="${C}" r="256"/><circle class="ring fine" cx="${C}" cy="${C}" r="238"/>`);
-    parts.push(`<circle class="ring fine" cx="${C}" cy="${C}" r="186"/><circle class="ring" cx="${C}" cy="${C}" r="132"/><circle class="ring fine" cx="${C}" cy="${C}" r="104"/>`);
-    let marks = '';
-    for (let i = 0; i < 52; i++) {
-      const a = (i * 360 / 52) * Math.PI / 180;
-      marks += i % 4 === 0
-        ? `<circle cx="${C + Math.cos(a) * 247}" cy="${C + Math.sin(a) * 247}" r="1.4" fill="none"/>`
-        : `<line x1="${C + Math.cos(a) * 244}" y1="${C + Math.sin(a) * 244}" x2="${C + Math.cos(a) * 250}" y2="${C + Math.sin(a) * 250}" stroke-width=".8"/>`;
-    }
-    parts.push(`<g class="marks">${marks}</g>`);
-    parts.push(`<circle class="prog" id="prog" cx="${C}" cy="${C}" r="${PROG_R}" stroke-dasharray="${PROG_LEN}" stroke-dashoffset="${PROG_LEN}"/>`);
-    letters.forEach((ch, i) => {
-      const deg = -90 + (i * 360) / letters.length;
-      const a = (deg * Math.PI) / 180;
-      const x = C + Math.cos(a) * 213, y = C + Math.sin(a) * 213;
-      POS[ch] = { x, y };
-      parts.push(`<text class="ch" data-k="${ch}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="27" text-anchor="middle" dominant-baseline="central" transform="rotate(${(deg + 90).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})">${ch}</text>`);
-    });
-    '1234567890'.split('').forEach((ch, i) => {
-      const deg = -90 + (i * 360) / 10 + 18;
-      const a = (deg * Math.PI) / 180;
-      const x = C + Math.cos(a) * 158, y = C + Math.sin(a) * 158;
-      POS[ch] = { x, y };
-      parts.push(`<text class="ch" data-k="${ch}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="21" text-anchor="middle" dominant-baseline="central">${ch}</text>`);
-    });
-    const words = { YES: ['Yes', C - 52, C - 22], NO: ['No', C + 52, C - 22], GOODBYE: ['Goodbye', C, C + 56] };
-    for (const [k, [label, x, y]] of Object.entries(words)) {
-      POS[k] = { x, y };
-      parts.push(`<text class="ch word" data-k="${k}" x="${x}" y="${y}" font-size="22" text-anchor="middle" dominant-baseline="central">${label}</text>`);
-    }
-    parts.push(`<g class="dial-ghost"><use href="#gs-face" x="200" y="186" width="120" height="152"/></g>`);
-    parts.push(`<path class="center-mark" d="M${C} ${C - 9} L${C + 9} ${C} L${C} ${C + 9} L${C - 9} ${C}Z"/>`);
-    parts.push(`<g class="lens" id="lens"><circle class="halo" r="54"/><circle class="glass" r="27"/><circle class="rim" r="27"/><circle class="rim" r="31" stroke-opacity=".35"/>
-      <line x1="0" y1="-40" x2="0" y2="-33"/><line x1="0" y1="33" x2="0" y2="40"/><line x1="-40" y1="0" x2="-33" y2="0"/><line x1="33" y1="0" x2="40" y2="0"/></g>`);
-    const el = document.createElement('div');
-    el.className = 'dial';
-    el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = `<svg viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg>`;
-    return el;
-  })();
-  const lens = dial.querySelector('#lens');
-  const prog = dial.querySelector('#prog');
-  const chars = {};
-  dial.querySelectorAll('.ch').forEach((t) => { chars[t.dataset.k] = t; });
-  let litEl = null;
-  let lensAt = { x: C, y: C };
-  const point = (key, quiet = false) => {
-    const p = key && POS[key] ? POS[key] : { x: C, y: C };
-    lensAt = p;
-    lens.style.transform = `translate(${p.x}px, ${p.y}px)`;
-    if (litEl) litEl.classList.remove('lit');
-    litEl = key ? chars[key] : null;
-    if (litEl) litEl.classList.add('lit');
-    if (key && !quiet) sfx.tick();
-  };
-  const ripple = (felt = false) => {
-    if (reduceMotion) return;
-    const r = document.createElement('span');
-    r.className = 'ripple' + (felt ? ' felt' : '');
-    r.style.left = (lensAt.x / 520) * 100 + '%';
-    r.style.top = (lensAt.y / 520) * 100 + '%';
-    dial.appendChild(r);
-    setTimeout(() => r.remove(), 2400);
-  };
-  const setProgress = (f) => { prog.style.strokeDashoffset = String(PROG_LEN * (1 - Math.max(0, Math.min(1, f)))); };
-  point(null, true);
+  // ---------- The door ----------
+  const door = Door.create(document.createElement('div'));
+  const doorEl = door.el;
+  const setProgress = (f) => door.progress(f);
 
   // ---------- Views ----------
   let current = 'landing';
   const show = (name) => {
     current = name;
     for (const v of ['landing', 'scan', 'report']) $(v).classList.toggle('on', v === name);
-    if (name === 'landing') $('heroSlot').appendChild(dial);
-    if (name === 'scan') $('scanSlot').appendChild(dial);
+    if (name === 'landing') { $('heroSlot').appendChild(doorEl); door.shut(); door.label('Knock'); door.progress(0); }
+    if (name === 'scan') { $('scanSlot').appendChild(doorEl); door.shut(); door.progress(0); }
     window.scrollTo({ top: 0, behavior: 'auto' });
     Haunt.scene(name);
-    if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .index-section h2', presence: 0.9 }); setTimeout(() => current === 'landing' && Ghosts.idle(2), 900); }
-    if (name === 'scan') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.scan-copy > *, .evidence > *', presence: 0.95 }); }
+    if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .door, .index-section h2', presence: 0.9 }); setTimeout(() => current === 'landing' && Ghosts.idle(2), 900); }
+    if (name === 'scan') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.scan-copy > *, .evidence > *, .door', presence: 0.95 }); }
     if (name === 'report') Ghosts.setting({ avoid: '.report-head > *, .verdict-main > *, .gauge, .casefile, .toc, .limits', presence: 0.55 });
     if (name === 'landing') { idleSpoken = 0; lastTyped = Date.now(); }
   };
@@ -238,87 +154,49 @@
   let lastTyped = 0;
   let idleTimer = null;
   let idleSpoken = 0;
-  let selfSpelling = false;
-  // Left alone, the planchette begins to move by itself.
-  const MESSAGES = [{ after: 11000, word: 'HELLO' }, { after: 32000, word: 'BEHINDYOU', then: () => Haunt.drift({ opacity: 0.2, height: 64, duration: 9000, y: 14 }) }];
-  const spellAlone = async (msg) => {
-    selfSpelling = true;
-    Haunt.gutter(500);
-    for (const ch of msg.word) {
-      if (current !== 'landing' || Date.now() - lastTyped < 1000) { selfSpelling = false; return; }
-      point(ch, false);
-      await sleep(760);
-    }
-    await sleep(900);
-    point(null, true);
-    selfSpelling = false;
-    if (msg.then) msg.then();
-  };
+  // Left alone, the house starts doing things by itself.
+  const MESSAGES = [
+    { after: 9000, run: () => { door.label('Someone\'s home'); door.peek(3200); Haunt.gutter(500); } },
+    { after: 24000, run: () => { door.knock(); sfx.knock(); door.label('Let me out'); } },
+    { after: 45000, run: () => { door.label('Behind you'); Haunt.drift({ opacity: 0.22, height: 64, duration: 9000, y: 14 }); } },
+  ];
   const idle = () => {
     clearTimeout(idleTimer);
     if (reduceMotion) return;
     idleTimer = setTimeout(() => {
       const quiet = Date.now() - lastTyped;
-      if (current === 'landing' && !selfSpelling && !isPlain()) {
+      if (current === 'landing' && !isPlain() && !$('url').value) {
         const next = MESSAGES[idleSpoken];
-        if (next && quiet > next.after && document.activeElement !== $('url')) { idleSpoken++; spellAlone(next); }
-        else if (quiet > 4000) {
-          const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-          point(keys[Math.floor(Math.random() * keys.length)], true);
-        }
+        if (next && quiet > next.after && document.activeElement !== $('url')) { idleSpoken++; next.run(); setTimeout(() => !$('url').value && door.label('Knock'), 4000); }
       }
       idle();
     }, 3000);
   };
+  let knockAt = 0;
   $('url').addEventListener('input', (e) => {
     lastTyped = Date.now();
-    const ch = (e.target.value.slice(-1) || '').toUpperCase();
-    if (POS[ch]) point(ch); else if (!e.target.value) point(null, true);
+    const v = e.target.value.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+    door.label(v || 'Knock');
+    if (Date.now() - knockAt > 900 && v) { knockAt = Date.now(); door.knock(); sfx.tick(); }
   });
 
   $('reveals').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => `<li>
-    <span class="top-row"><span class="icon">${ICONS[t]}</span><span class="num">${KINDS[t].n}</span></span>
-    <span class="name">${KINDS[t].name}</span><span class="kind">${cap(KINDS[t].many)}</span><span class="desc">${KINDS[t].meaning}</span></li>`).join('');
+    <span class="top-row"><span class="icon">${ICONS[t]}</span><span class="stamp" style="--ink:${KINDS[t].color}">${KINDS[t].stamp}</span></span>
+    <span class="name">${KINDS[t].name}</span><span class="kind">${cap(KINDS[t].many)}</span><span class="desc">${KINDS[t].meaning}</span><span class="epitaph">${KINDS[t].epitaph}</span></li>`).join('');
   show('landing');
   idle();
 
   // ---------- The séance (scan) ----------
   let source = null;
-  let spellQ = [];
-  let spellTimer = null;
-  let word = '';
-  let spelled = '';
   let scanHost = '';
   let maxPages = 100;
   let presences = 0;
   let whisperTimer = null;
   let lastWhisper = 0;
 
-  const wordFrom = (url, own) => {
-    try {
-      const u = new URL(url);
-      if (!own) return u.hostname.replace(/^www\./, '').split('.')[0];
-      const seg = u.pathname.split('/').filter(Boolean).pop();
-      return seg ? (seg.split(/[-_.]/).find((w) => /[a-z]{3,}/i.test(w)) || seg) : u.hostname.replace(/^www\./, '').split('.')[0];
-    } catch { return ''; }
-  };
-  const startSpelling = () => {
-    const step = () => {
-      if (!spellQ.length && word && word !== spelled) {
-        spelled = word;
-        spellQ = word.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 9).split('');
-        if (Math.random() < 0.25) Haunt.gutter(350);
-      }
-      if (spellQ.length) point(spellQ.shift());
-      spellTimer = setTimeout(step, reduceMotion ? 1000 : 440);
-    };
-    step();
-  };
   const stopScan = () => {
     if (source) source.close();
     source = null;
-    clearTimeout(spellTimer);
-    spellQ = []; word = ''; spelled = '';
     document.body.classList.remove('speaking', 'scanning', 'felt', 'invoking');
   };
   $('home').onclick = (e) => { e.preventDefault(); stopScan(); show('landing'); };
@@ -343,16 +221,18 @@
     el.classList.add('fade');
     setTimeout(() => { el.textContent = t; el.classList.remove('fade'); }, reduceMotion ? 0 : 300);
   };
+  let lastFlash = 0;
   const reading = (label, url) => {
     $('rnLabel').textContent = label;
     const el = $('rnUrl');
     el.textContent = url;
-    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+    if (Date.now() - lastFlash > 700) { lastFlash = Date.now(); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
   };
   const felt = (e) => {
     presences++;
-    Haunt.felt(e.kind, dial.getBoundingClientRect(), presences);
-    if (KINDS[e.kind]) Ghosts.spawn(e.kind, dial.getBoundingClientRect(), `${KINDS[e.kind].name} · ${e.url ? shortPath(e.url) : ''}`);
+    const mouth = door.mouth();
+    Haunt.felt(e.kind, mouth, presences);
+    if (KINDS[e.kind]) Ghosts.spawn(e.kind, mouth, `${KINDS[e.kind].name} · ${e.url ? shortPath(e.url) : ''}`);
     const dd = $('cGhosts');
     dd.textContent = fmt(presences);
     dd.classList.remove('pulse'); void dd.offsetWidth; dd.classList.add('pulse');
@@ -361,10 +241,11 @@
       lastWhisper = now;
       document.body.classList.add('felt');
       setTimeout(() => document.body.classList.remove('felt'), 900);
-      ripple(true);
+      door.burst();
+      door.label(KINDS[e.kind] ? KINDS[e.kind].stamp : 'Something');
       sfx.felt();
       const w = $('whisper');
-      w.textContent = (WHISPERS[e.kind] || (() => 'Something stirs.'))(e.url ? shortPath(e.url) : 'this house');
+      w.textContent = (WHISPERS[e.kind] || (() => 'Something moved.'))(e.url ? shortPath(e.url) : 'this house');
       w.classList.add('on');
       clearTimeout(whisperTimer);
       whisperTimer = setTimeout(() => w.classList.remove('on'), 2600);
@@ -377,53 +258,53 @@
     e.preventDefault();
     const typed = $('url').value.trim();
     const raw = /^http:\/\//i.test(typed) ? typed : typed.replace(/^https:\/\//i, '');
-    if (!raw) { $('error').textContent = 'Name a house to visit first, like yoursite.com.'; $('url').focus(); return; }
+    if (!raw) { $('error').textContent = 'Which house? Type an address first, like yoursite.com.'; $('url').focus(); door.knock(); return; }
     $('error').textContent = '';
     scanHost = hostOf(/^http:/i.test(raw) ? raw : 'https://' + raw);
     maxPages = Number($('maxPages').value);
 
-    // The invocation: the room dims, then the séance begins.
+    // The door swings open and you step through.
     sfx.invoke();
+    door.wide();
     document.body.classList.add('invoking');
     await sleep(reduceMotion || isPlain() ? 0 : 850);
     $('scanHost').textContent = scanHost;
-    phaseText = ''; $('scanPhase').textContent = 'The spirits are gathering.';
+    phaseText = ''; $('scanPhase').textContent = 'Picking the lock.';
     $('cPages').textContent = '0'; $('cLinks').textContent = '0'; $('cGhosts').textContent = '0';
     presences = 0;
     $('log').innerHTML = '';
     $('whisper').classList.remove('on');
-    reading('Now entering', 'the front door');
+    reading('Opening', 'the front door');
     setProgress(0);
     show('scan');
     document.body.classList.add('scanning');
     document.body.classList.remove('invoking');
-    word = scanHost.split('.')[0];
-    startSpelling();
+    door.label(scanHost);
 
     const qs = new URLSearchParams({ url: raw, maxPages: String(maxPages), external: $('external').checked ? '1' : '0' });
     source = new EventSource('/api/scan?' + qs);
     source.addEventListener('progress', (m) => {
       const d = JSON.parse(m.data);
-      if (d.type === 'phase' && d.phase === 'knocking') setPhase('Knocking on the front door.');
-      if (d.type === 'phase' && d.phase === 'reading the map') setPhase('Reading the map of the house.');
-      if (d.type === 'phase' && d.phase === 'knocking on every door') setPhase('Knocking on every door.');
+      if (d.type === 'phase' && d.phase === 'knocking') setPhase('Picking the lock.');
+      if (d.type === 'phase' && d.phase === 'reading the map') setPhase('Reading the floor plan.');
+      if (d.type === 'phase' && d.phase === 'knocking on every door') { setPhase('Rattling every door handle.'); door.label('Every door'); }
       if (d.type === 'page') {
-        setPhase('Walking every room.');
+        setPhase('Searching every room.');
         $('cPages').textContent = fmt(d.pagesScanned);
         setProgress(0.4 * (d.pagesScanned / maxPages));
-        reading('Now entering', shortPath(d.url));
+        reading('Opening', shortPath(d.url));
         log('room', shortPath(d.url));
-        word = wordFrom(d.url, true);
-        if (d.pagesScanned % 2 === 0) ripple();
+        if (door.enter(shortPath(d.url), 700)) sfx.creak();
+        if (d.pagesScanned % 3 === 0) Hall.creak(1200);
       }
       if (d.type === 'link') {
         $('cLinks').textContent = fmt(d.linksChecked);
         setProgress(0.4 + 0.6 * (d.linksChecked / Math.max(1, d.linksTotal)));
         if (d.linksChecked % 2 === 0 || (typeof d.status === 'number' && d.status >= 400)) {
-          reading('Knocking at', shortPath(d.url));
+          reading('Rattling', shortPath(d.url));
+          if (d.linksChecked % 6 === 0) door.knock();
           log(d.status, d.status === 'broken' ? d.url : shortPath(d.url));
         }
-        if (d.linksChecked % 5 === 0) word = wordFrom(d.url, hostOf(d.url) === scanHost);
       }
       if (d.type === 'presence') felt(d);
     });
@@ -432,7 +313,7 @@
     source.onerror = () => {
       if (!source) return;
       stopScan(); show('landing');
-      $('error').textContent = 'The connection to the spirits was lost. Check the scanner is still running in your terminal, then try again.';
+      $('error').textContent = 'The lights went out: lost the connection to the scanner. Check it is still running in your terminal, then try again.';
     };
   };
 
@@ -446,21 +327,22 @@
     if (isPlain() || reduceMotion) { renderReport(); return; }
 
     document.body.classList.add('speaking');
-    setPhase('Spirits, how many ghosts walk this house?');
-    reading('The question', `How many ghosts walk ${hostOf(result.site)}?`);
-    point(null, true);
+    setPhase('Every room searched. Opening the last door.');
+    reading('Last door', hostOf(result.site));
+    door.label('The truth');
     let skip = false;
     const onSkip = () => { skip = true; };
     document.addEventListener('click', onSkip, { once: true });
     document.addEventListener('keydown', onSkip, { once: true });
     const wait = (ms) => (skip ? Promise.resolve() : sleep(ms));
-    await wait(1300);
-    if (n) { for (const d of String(n)) { point(d); ripple(); await wait(900); } }
-    point(n ? 'YES' : 'NO');
-    ripple(Boolean(n));
-    sfx.answer();
-    setPhase(n ? `The spirits have spoken: ${fmt(n)} ghost${n === 1 ? '' : 's'}.` : 'The spirits have spoken: the house is at peace.');
-    await wait(1700);
+    await wait(700);
+    door.knock(); sfx.knock(); await wait(650);
+    door.knock(); sfx.knock(); await wait(900);
+    door.ajar(); sfx.creak(); await wait(900);
+    door.wide(); sfx.answer();
+    if (n) { const m = door.mouth(); Ghosts.swarm({ x: m.left + m.width / 2, y: m.top + m.height / 2 }); }
+    setPhase(n ? `${fmt(n)} ghost${n === 1 ? ' was' : 's were'} hiding in here.` : 'Empty. Not a single ghost.');
+    await wait(1500);
     const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
     const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
     await Haunt.reveal({ count: leftNow, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip });
@@ -496,6 +378,15 @@
     return '';
   };
 
+  const stampText = (g) => {
+    const tag = statusTag(g);
+    const k = KINDS[g.type].stamp;
+    if (g.type === 'dead' && /^\d+$/.test(tag)) return `${k} · ${tag}`;
+    if (g.type === 'dead' && tag === 'domain gone') return `${k} · no domain`;
+    if (g.type === 'chain' && tag) return `${k} · ${tag}`;
+    if (g.confidence === 'maybe') return `${k} · likely`;
+    return k;
+  };
   const recordHtml = (g, i) => {
     const subjectUrl = ['stale-year', 'past-event'].includes(g.type) ? null : g.url;
     const linkable = subjectUrl && /^https?:/.test(subjectUrl) && !/^https?:\/\/[^./]+\/?$/.test(subjectUrl);
@@ -515,10 +406,11 @@
     return `<li class="record${rested ? ' rested' : ''}" data-id="${esc(g.id)}" data-conf="${esc(g.confidence)}">
       <span class="rec-no">Nº ${String(i + 1).padStart(2, '0')}</span>
       <span class="sev" title="${conf}"></span>
+      <span class="rec-stamp" aria-hidden="true">${rested ? 'Laid to rest' : esc(stampText(g))}</span>
       <div class="rec-body">
         ${target}<span class="rest-note">Laid to rest</span>
         <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag">· likely</span>' : ''}</p>
-        ${g.type === 'locked' ? '' : `<p class="fix"><b>Fix</b>${esc(g.fix)}</p>`}
+        ${g.type === 'locked' ? '' : `<p class="fix"><b>The cure</b>${esc(g.fix)}</p>`}
       </div>
       <div class="acts">
         ${page && !rested ? `<a class="btn ghost small" href="${esc(page)}" target="_blank" rel="noopener noreferrer">Open page</a>` : ''}
@@ -531,9 +423,10 @@
     const k = KINDS[t];
     return `<section class="casefile" id="g-${t}" style="--accent:${t === 'locked' ? 'var(--bone-3)' : k.color}">
       <header class="case-head">
-        <span class="case-icon">${ICONS[t]}</span>
+        <span class="room-door" aria-hidden="true"><i class="rd-light"></i><i class="rd-eyes"><b></b><b></b></i><i class="rd-leaf"></i></span>
         <div>
-          <div class="case-title"><span class="n">${k.n}</span><h2>${k.name}</h2></div>
+          <div class="case-title"><span class="n">Room ${k.n}</span><h2>${k.name}</h2></div>
+          <p class="case-epitaph">${k.epitaph}</p>
           <p class="case-meaning">${k.meaning}</p>
         </div>
         <div class="case-count"><b data-num="${t}"></b><span data-label="${t}"></span></div>
@@ -583,20 +476,20 @@
     verdictWord(left ? `${rankOf(s)}.` : 'At peace.');
     const top = ORDER.filter((t) => t !== 'locked' && alive(t).length).slice(0, 2);
     $('vLine').textContent = left
-      ? `${fmt(left)} ghost${left === 1 ? '' : 's'} walk these pages. ${top.length ? 'Begin with the ' + top.map((t) => count(alive(t).length, t)).join(', then the ') + '.' : ''}${state.banished.size ? ` You have banished ${fmt(state.banished.size)}.` : ''}`
-      : r.ghostCount ? 'Every ghost has been banished. Run the séance again after you publish your fixes to confirm they stay gone.' : 'Nothing has died on the pages we walked. Links rot quietly, so return in a few weeks.';
+      ? `${fmt(left)} ghost${left === 1 ? ' is' : 's are'} living in these pages, and your visitors are walking right into them. ${top.length ? 'Start with the ' + top.map((t) => count(alive(t).length, t)).join(', then the ') + '.' : ''}${state.banished.size ? ` ${fmt(state.banished.size)} banished so far.` : ''}`
+      : r.ghostCount ? 'Every ghost banished. Publish your fixes, then search the house again to make sure they stay gone.' : 'Not a single ghost on the pages we searched. Links rot quietly, so come back in a few weeks, or hire the night watchman.';
     $('omens').innerHTML = `
       <div class="bad"><dt>Ghosts found</dt><dd>${fmt(left)}</dd></div>
       <div class="bad"><dt>Dead links</dt><dd>${fmt(alive('dead').length)}</dd></div>
-      <div><dt>Rooms walked</dt><dd>${fmt(r.pagesScanned)}</dd></div>
-      <div><dt>Doors knocked</dt><dd>${fmt(r.linksChecked)}</dd></div>`;
+      <div><dt>Rooms searched</dt><dd>${fmt(r.pagesScanned)}</dd></div>
+      <div><dt>Doors tried</dt><dd>${fmt(r.linksChecked)}</dd></div>`;
     const frac = Math.min(1, s / 200);
     requestAnimationFrame(() => {
       $('gFill').style.strokeDashoffset = String(315 * (1 - frac));
       $('gNeedle').style.transform = `rotate(${-90 + 180 * frac}deg)`;
     });
     countTo($('vScore'), s);
-    $('gaugeCap').textContent = `Unrest · ${rankOf(s).toLowerCase()}`;
+    $('gaugeCap').textContent = `Haunt level · ${rankOf(s).toLowerCase()}`;
     $('spectrum').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => {
       const w = alive(t).reduce((n, g) => n + ghostScore(g), 0);
       return w ? `<span style="flex-grow:${w};background:${KINDS[t].color};color:${KINDS[t].color}" title="${esc(KINDS[t].name)}"></span>` : '';
@@ -612,6 +505,7 @@
       const lab = document.querySelector(`[data-label="${t}"]`);
       if (num) num.textContent = n || t === 'locked' ? fmt(n) : '0';
       if (lab) lab.textContent = n || t === 'locked' ? (n === 1 ? KINDS[t].one : KINDS[t].many) : 'all laid to rest';
+      $('g-' + t)?.style.setProperty('--n', String(Math.min(n, 9)));
       $('g-' + t)?.classList.toggle('rested-all', !n && t !== 'locked');
     });
     const peace = $('peaceBlock');
@@ -633,7 +527,7 @@
     document.querySelectorAll('.casefile').forEach((c) => observer.observe(c));
   };
 
-  const ghostInfo = (g) => `${KINDS[g.type].name}: ${g.quote ? '“' + g.quote.slice(0, 60) + (g.quote.length > 60 ? '…' : '') + '”' : shortUrl(g.url)}. Click to open its case file.`;
+  const ghostInfo = (g) => `${KINDS[g.type].name}: ${g.quote ? '“' + g.quote.slice(0, 60) + (g.quote.length > 60 ? '…' : '') + '”' : shortUrl(g.url)}. Click to find where it lives.`;
   const callRecord = (id) => {
     const el = document.querySelector(`.record[data-id="${CSS.escape(id)}"]`);
     if (!el) return;
@@ -644,7 +538,7 @@
     const r = state.result;
     $('rHost').textContent = hostOf(r.site);
     const date = new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    $('rMeta').textContent = `Read on ${date}`;
+    $('rMeta').textContent = `Searched on ${date} · ${fmt(r.pagesScanned)} rooms · ${fmt(r.linksChecked)} doors`;
     $('vScore').dataset.v = 0;
     $('vWord').dataset.text = '';
     $('gFill').style.strokeDashoffset = '315';
@@ -655,13 +549,13 @@
         return `<line x1="${120 + Math.cos(a) * 86}" y1="${130 - Math.sin(a) * 86}" x2="${120 + Math.cos(a) * 78}" y2="${130 - Math.sin(a) * 78}"/>`;
       }).join('');
     }
-    $('findings').innerHTML = `<div class="peace" id="peaceBlock" hidden><h2>The house is at peace.</h2><p>Nothing left to banish on the pages we walked.</p></div>`
+    $('findings').innerHTML = `<div class="peace" id="peaceBlock" hidden><h2>The house is at peace.</h2><p>Nothing left to banish on the pages we searched.</p></div>`
       + present().map(caseHtml).join('');
     const l = r.limits || {};
     const notes = [];
-    if (l.pagesCapped) notes.push(`The séance stopped after ${fmt(l.maxPages)} rooms. The terminal version can walk the whole house with --max-pages.`);
-    if (l.linksCapped) notes.push(`${fmt(r.linksChecked)} of ${fmt(l.linksTotal)} doors were knocked on, your own first.`);
-    if (l.robotsSkipped) notes.push(`${fmt(l.robotsSkipped)} room${l.robotsSkipped === 1 ? ' was' : 's were'} left alone because your robots.txt asks bots to stay out.`);
+    if (l.pagesCapped) notes.push(`We stopped after ${fmt(l.maxPages)} rooms. The terminal version can search the whole house with --max-pages.`);
+    if (l.linksCapped) notes.push(`${fmt(r.linksChecked)} of ${fmt(l.linksTotal)} doors were tried, your own first.`);
+    if (l.robotsSkipped) notes.push(`${fmt(l.robotsSkipped)} room${l.robotsSkipped === 1 ? ' was' : 's were'} left sealed because your robots.txt asks bots to stay out.`);
     $('limits').innerHTML = notes.map((t) => `<p>${esc(t)}</p>`).join('');
     $('limits').hidden = !notes.length;
     show('report');
@@ -711,7 +605,7 @@
     paintSummary();
   });
 
-  $('again').onclick = () => { show('landing'); point(null, true); $('url').select(); $('url').focus(); };
+  $('again').onclick = () => { show('landing'); $('url').select(); $('url').focus(); };
 
   // ---------- Downloads ----------
   const download = (blob, name) => {
@@ -731,109 +625,90 @@
   const loadImg = (svg) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
   $('share').onclick = async () => {
     const r = state.result;
-    try { await Promise.all(['500 72px "Cormorant Garamond"', 'italic 500 64px "Cormorant Garamond"', '500 20px Inter', '400 18px Inter', '200 96px Inter'].map((f) => document.fonts.load(f))); } catch {}
+    try { await Promise.all(['400 72px "Pirata One"', '400 20px "Special Elite"', '500 20px Inter', '400 18px Inter'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630, S = 2;
     const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
     const x = c.getContext('2d'); x.scale(S, S);
-    x.fillStyle = '#0a0909'; x.fillRect(0, 0, W, H);
-    const warm = x.createRadialGradient(925, 315, 20, 925, 315, 540);
-    warm.addColorStop(0, 'rgba(138,42,46,.30)'); warm.addColorStop(.5, 'rgba(224,163,90,.05)'); warm.addColorStop(1, 'rgba(0,0,0,0)');
-    x.fillStyle = warm; x.fillRect(0, 0, W, H);
-    const candle = x.createRadialGradient(0, H, 10, 0, H, 520);
-    candle.addColorStop(0, 'rgba(224,163,90,.16)'); candle.addColorStop(1, 'rgba(224,163,90,0)');
-    x.fillStyle = candle; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#2b2531'; x.fillRect(0, 0, W, H);
+    // the hallway, shifted so its far door sits behind the count
+    const hallSvg = $('hall').innerHTML.replace('<svg ', '<svg width="1600" height="1000" ');
+    const hall = await loadImg(hallSvg);
+    if (hall) x.drawImage(hall, 925 - 800 * 0.9, 330 - 470 * 0.9, 1600 * 0.9, 1000 * 0.9);
+    const shade = x.createLinearGradient(0, 0, W, 0);
+    shade.addColorStop(0, 'rgba(20,16,22,.94)'); shade.addColorStop(.48, 'rgba(20,16,22,.78)'); shade.addColorStop(.68, 'rgba(20,16,22,.15)'); shade.addColorStop(1, 'rgba(20,16,22,.25)');
+    x.fillStyle = shade; x.fillRect(0, 0, W, H);
     const vig = x.createRadialGradient(W / 2, H / 2, 300, W / 2, H / 2, 820);
-    vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.7)');
+    vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.55)');
     x.fillStyle = vig; x.fillRect(0, 0, W, H);
     const grain = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`);
-    if (grain) { x.globalAlpha = .05; x.drawImage(grain, 0, 0, W, H); x.globalAlpha = 1; }
-    const sig = await loadImg($('sigil').innerHTML.replace('<svg ', '<svg width="1000" height="1000" '));
-    if (sig) { x.globalAlpha = .1; x.drawImage(sig, 925 - 340, 315 - 340, 680, 680); x.globalAlpha = 1; }
-    // lantern beam
-    if (x.createConicGradient) {
-      const beam = x.createConicGradient(-Math.PI / 2 - 0.62, 640, H + 60);
-      beam.addColorStop(0, 'rgba(245,205,140,0)'); beam.addColorStop(0.03, 'rgba(245,205,140,.10)'); beam.addColorStop(0.055, 'rgba(245,205,140,.16)');
-      beam.addColorStop(0.08, 'rgba(245,205,140,.08)'); beam.addColorStop(0.11, 'rgba(245,205,140,0)'); beam.addColorStop(1, 'rgba(245,205,140,0)');
-      x.save(); x.filter = 'blur(14px)'; x.globalCompositeOperation = 'screen'; x.fillStyle = beam; x.fillRect(0, 0, W, H); x.restore();
-    }
-    // the figure behind the dial
+    if (grain) { x.globalAlpha = .06; x.drawImage(grain, 0, 0, W, H); x.globalAlpha = 1; }
+    // a figure standing in the hallway
     const defsMk = document.getElementById('gs-specter')?.closest('defs')?.outerHTML;
     if (defsMk) {
       const fig = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 200 400">${defsMk}<use href="#gs-specter" width="200" height="400"/></svg>`);
-      if (fig) { x.save(); x.globalCompositeOperation = 'screen'; x.globalAlpha = .26; x.drawImage(fig, 1030, 40, 250, 500); x.restore(); }
+      if (fig) { x.save(); x.globalCompositeOperation = 'screen'; x.globalAlpha = .34; x.drawImage(fig, 1040, 150, 150, 300); x.restore(); }
     }
 
     const host = hostOf(r.site);
     const left = aliveAll().length;
     const s = scoreNow();
     x.textBaseline = 'alphabetic'; x.textAlign = 'left';
-    x.fillStyle = '#bf9a5f'; x.font = '500 18px Inter, sans-serif';
-    x.fillText('A reading for', 80, 112);
-    x.fillStyle = '#ebe3d3';
-    let fs = 76; x.font = `500 ${fs}px "Cormorant Garamond", Georgia, serif`;
-    while (x.measureText(host).width > 600 && fs > 36) { fs -= 2; x.font = `500 ${fs}px "Cormorant Garamond", Georgia, serif`; }
-    x.fillText(host, 78, 182);
-    x.font = 'italic 500 60px "Cormorant Garamond", Georgia, serif';
-    x.shadowColor = 'rgba(159,217,196,.35)'; x.shadowBlur = 24;
-    x.fillText(left ? `${rankOf(s)}.` : 'At peace.', 78, 268);
-    x.shadowBlur = 0; x.shadowColor = 'transparent';
-    x.fillStyle = '#bbb1a1'; x.font = '400 18px Inter, sans-serif';
-    x.fillText(left ? `${fmt(left)} ghost${left === 1 ? '' : 's'} across ${fmt(r.pagesScanned)} rooms walked` : `${fmt(r.pagesScanned)} rooms walked, nothing dead`, 80, 306);
+    x.fillStyle = '#d9b77a'; x.font = '400 19px "Special Elite", monospace';
+    x.fillText('HAUNTED HOUSE INSPECTION', 80, 108);
+    x.fillStyle = '#f1e8d6';
+    let fs = 84; x.font = `400 ${fs}px "Pirata One", Georgia, serif`;
+    while (x.measureText(host).width > 560 && fs > 40) { fs -= 2; x.font = `400 ${fs}px "Pirata One", Georgia, serif`; }
+    x.fillText(host, 78, 190);
+    // the verdict, rubber-stamped
+    const verdict = (left ? rankOf(s) : 'At peace').toUpperCase();
+    x.save(); x.translate(84, 214); x.rotate(-0.045);
+    x.font = '400 30px "Special Elite", monospace';
+    const vw = x.measureText(verdict).width + 34;
+    x.strokeStyle = left ? '#d9504f' : '#9cc7a9'; x.lineWidth = 3; x.strokeRect(0, 0, vw, 50);
+    x.lineWidth = 1; x.strokeRect(5, 5, vw - 10, 40);
+    x.fillStyle = left ? '#e2615e' : '#a6d1b3'; x.fillText(verdict, 17, 36); x.restore();
+    x.fillStyle = '#cfc4b4'; x.font = '400 18px Inter, sans-serif';
+    x.fillText(left ? `${fmt(left)} ghost${left === 1 ? '' : 's'} found in ${fmt(r.pagesScanned)} rooms` : `${fmt(r.pagesScanned)} rooms searched. Not one ghost.`, 80, 310);
 
     const kinds = ORDER.filter((t) => t !== 'locked' && alive(t).length).sort((a, b) => alive(b).length - alive(a).length).slice(0, 4);
     const maxN = Math.max(1, ...kinds.map((t) => alive(t).length));
     kinds.forEach((t, i) => {
-      const y = 366 + i * 46;
-      x.fillStyle = '#ebe3d3'; x.font = '500 16px Inter, sans-serif'; x.textAlign = 'left';
+      const y = 368 + i * 44;
+      x.fillStyle = '#f1e8d6'; x.font = '500 16px Inter, sans-serif'; x.textAlign = 'left';
       x.fillText(cap(KINDS[t].many), 80, y);
-      x.textAlign = 'right'; x.fillStyle = '#bf9a5f'; x.font = '500 18px Inter, sans-serif';
-      x.fillText(fmt(alive(t).length), 560, y);
-      x.fillStyle = 'rgba(235,227,211,.12)'; x.fillRect(80, y + 12, 480, 1);
-      x.fillStyle = KINDS[t].color; x.fillRect(80, y + 11, 480 * (alive(t).length / maxN), 3);
+      x.textAlign = 'right'; x.fillStyle = '#d9b77a'; x.font = '400 18px "Special Elite", monospace';
+      x.fillText(fmt(alive(t).length), 540, y);
+      x.fillStyle = 'rgba(241,232,214,.14)'; x.fillRect(80, y + 12, 460, 1);
+      x.fillStyle = KINDS[t].color; x.fillRect(80, y + 11, 460 * (alive(t).length / maxN), 3);
     });
 
-    const cx = 925, cy = 315;
-    x.strokeStyle = 'rgba(235,227,211,.16)'; x.lineWidth = 1;
-    [212, 204, 150, 112].forEach((rad, i) => { x.globalAlpha = i % 2 ? .6 : 1; x.beginPath(); x.arc(cx, cy, rad, 0, Math.PI * 2); x.stroke(); });
-    x.globalAlpha = 1;
-    x.font = '500 22px "Cormorant Garamond", Georgia, serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    const litLetter = (host.match(/[a-z]/i) || ['A'])[0].toUpperCase();
-    let at = null;
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach((ch, i) => {
-      const a = -Math.PI / 2 + (i * Math.PI * 2) / 26;
-      const px = cx + Math.cos(a) * 180, py = cy + Math.sin(a) * 180;
-      x.save(); x.translate(px, py); x.rotate(a + Math.PI / 2);
-      x.fillStyle = ch === litLetter ? '#ebe3d3' : 'rgba(235,227,211,.3)';
-      x.fillText(ch, 0, 0); x.restore();
-      if (ch === litLetter) at = [px, py];
-    });
-    if (at) {
-      const halo = x.createRadialGradient(at[0], at[1], 4, at[0], at[1], 46);
-      halo.addColorStop(0, 'rgba(224,163,90,.35)'); halo.addColorStop(1, 'rgba(224,163,90,0)');
-      x.fillStyle = halo; x.beginPath(); x.arc(at[0], at[1], 46, 0, Math.PI * 2); x.fill();
-      x.strokeStyle = '#bf9a5f'; x.lineWidth = 1.4; x.beginPath(); x.arc(at[0], at[1], 22, 0, Math.PI * 2); x.stroke();
-      x.globalAlpha = .4; x.beginPath(); x.arc(at[0], at[1], 26, 0, Math.PI * 2); x.stroke(); x.globalAlpha = 1;
-    }
-    x.fillStyle = '#ebe3d3'; x.font = '200 96px Inter, sans-serif';
-    x.fillText(fmt(left), cx, cy - 10);
-    x.fillStyle = '#bbb1a1'; x.font = 'italic 500 26px "Cormorant Garamond", Georgia, serif';
-    x.fillText(left === 1 ? 'ghost' : 'ghosts', cx, cy + 52);
+    // the count, glowing in the far doorway
+    const cx = 925, cy = 300;
+    const glow = x.createRadialGradient(cx, cy, 10, cx, cy, 230);
+    glow.addColorStop(0, 'rgba(255,214,150,.42)'); glow.addColorStop(1, 'rgba(255,214,150,0)');
+    x.fillStyle = glow; x.fillRect(cx - 240, cy - 240, 480, 480);
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.shadowColor = 'rgba(0,0,0,.7)'; x.shadowBlur = 24;
+    x.fillStyle = '#fff4dc'; x.font = '400 170px "Pirata One", Georgia, serif';
+    x.fillText(fmt(left), cx, cy - 6);
+    x.font = '400 26px "Special Elite", monospace'; x.fillStyle = '#f1e8d6';
+    x.fillText(left === 1 ? 'GHOST INSIDE' : 'GHOSTS INSIDE', cx, cy + 96);
+    x.shadowBlur = 0; x.shadowColor = 'transparent';
 
     // brass corners and the seal line
-    x.strokeStyle = 'rgba(191,154,95,.55)'; x.lineWidth = 1.2;
+    x.strokeStyle = 'rgba(217,183,122,.6)'; x.lineWidth = 1.2;
     [[28, 28, 1, 1], [W - 28, 28, -1, 1], [28, H - 28, 1, -1], [W - 28, H - 28, -1, -1]].forEach(([px, py, sx, sy]) => {
       x.beginPath(); x.moveTo(px, py + 44 * sy); x.lineTo(px, py); x.lineTo(px + 44 * sx, py); x.stroke();
       x.beginPath(); x.moveTo(px + 6 * sx, py + 22 * sy); x.lineTo(px + 6 * sx, py + 6 * sy); x.lineTo(px + 22 * sx, py + 6 * sy); x.stroke();
     });
     x.textBaseline = 'alphabetic';
-    x.textAlign = 'right'; x.fillStyle = 'rgba(191,154,95,.75)'; x.font = '500 13px Inter, sans-serif';
-    x.fillText(`Sealed ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, W - 80, 64);
-    x.textAlign = 'left';
-    x.fillStyle = 'rgba(235,227,211,.12)'; x.fillRect(80, 548, W - 160, 1);
-    x.textAlign = 'left'; x.fillStyle = '#ebe3d3'; x.font = 'italic 500 24px "Cormorant Garamond", Georgia, serif';
-    x.fillText('Graveyard Shift', 80, 584);
-    x.textAlign = 'right'; x.fillStyle = '#7f776c'; x.font = '400 15px Inter, sans-serif';
-    x.fillText('github.com/raoashwini21/graveyard-shift', W - 80, 584);
-    c.toBlob((b) => b && download(b, `graveyard-shift-${host}.png`), 'image/png');
+    x.textAlign = 'right'; x.fillStyle = 'rgba(217,183,122,.85)'; x.font = '400 14px "Special Elite", monospace';
+    x.fillText(`SEALED ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase()}`, W - 80, 64);
+    x.fillStyle = 'rgba(241,232,214,.14)'; x.fillRect(80, 548, W - 160, 1);
+    x.textAlign = 'left'; x.fillStyle = '#f1e8d6'; x.font = '400 30px "Pirata One", Georgia, serif';
+    x.fillText('Graveyard Shift', 80, 588);
+    x.textAlign = 'right'; x.fillStyle = '#a99d8d'; x.font = '400 15px Inter, sans-serif';
+    x.fillText('github.com/raoashwini21/graveyard-shift', W - 80, 586);
+  c.toBlob((b) => b && download(b, `graveyard-shift-${host}.png`), 'image/png');
   };
 })();
