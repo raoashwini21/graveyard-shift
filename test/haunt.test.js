@@ -80,3 +80,13 @@ test('the weekly haunt only emails you when something changes', async () => {
   assert.equal(out.action, 'opened');
   assert.equal(gh.issues.length, 2);
 });
+
+test('switching to a different site closes the old issue and opens a fresh one', async () => {
+  const gh = fakeGitHub();
+  await haunt(scanOf([ghost('a')]), gh);
+  const other = { ...scanOf([ghost('x')]), site: 'https://other.com' };
+  const out = await haunt(other, gh);
+  assert.equal(out.action, 'opened');
+  assert.equal(gh.issues[0].state, 'closed');
+  assert.match(gh.issues[1].title, /other\.com/);
+});

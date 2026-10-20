@@ -63,7 +63,14 @@ export function newGhostsComment(result, added, banished) {
 //       comment(n, body), ensureLabel(name) }
 export async function haunt(result, gh) {
   await gh.ensureLabel(LABEL);
-  const issue = await gh.findOpenIssue(LABEL);
+  let issue = await gh.findOpenIssue(LABEL);
+
+  // Switched to a different site? Close the old site's issue and start fresh.
+  const prevState = issue ? decodeState(issue.body) : null;
+  if (issue && prevState && prevState.site !== result.site) {
+    await gh.updateIssue(issue.number, { state: 'closed' });
+    issue = null;
+  }
 
   if (!issue) {
     if (result.ghostCount === 0) return { action: 'none', reason: 'at peace, no issue to update' };
@@ -71,8 +78,7 @@ export async function haunt(result, gh) {
     return { action: 'opened', issue: created.number, added: result.ghostCount };
   }
 
-  const prev = decodeState(issue.body);
-  const { added, banished } = diffScans(prev, { ghosts: result.ghosts.filter((g) => g.type !== 'locked') });
+  const { added, banished } = diffScans(prevState, { ghosts: result.ghosts.filter((g) => g.type !== 'locked') });
 
   if (result.ghostCount === 0) {
     await gh.updateIssue(issue.number, { title: `✨ ${hostOf(result.site)} is at peace`, body: issueBody(result, { added: [], banished }) });
