@@ -985,3 +985,6 @@ body.plain .kc-desc, body.plain .kinds-head p, body.plain .watch-copy > p, body.
 body.on-report .sub .tag.back { color: #ffb4a0; }
 .tomb-carve b { white-space: nowrap; }
 .k-nameless .tomb-carve b { font-size: calc(var(--ts, 120px) * .082); }
+.yard-sign { position: absolute; right: 3%; bottom: 3%; z-index: 7; display: grid; justify-items: center; padding: 10px 18px 12px; border-radius: 6px; transform: rotate(-3deg);
+  background: linear-gradient(180deg, #6b4a2e, #4a3020); border: 2px solid #2e1d12; box-shadow: 0 14px 24px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.15); color: #f6e7c8; }
+.yard-sign b { font: 700 26px/1 var(--story); } .yard-sign span { font: 600 12px var(--sans); letter-spacing: .08em; text-transform: uppercase; opacity: .85; }

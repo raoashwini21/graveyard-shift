@@ -9,8 +9,9 @@ window.Yard = (() => {
   const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches || document.body.classList.contains('calm');
   // Lamp posts in the painting, as fractions of the image (x, y of the lamp head). Tuned to scan-bg.
   let LAMPS = [[0.151, 0.258], [0.54, 0.337], [0.79, 0.392]];
-  const ROWS = [{ y: 0.81, s: 0.74, z: 1 }, { y: 0.9, s: 0.87, z: 3 }, { y: 0.995, s: 1, z: 5 }];
-  const MAX_TOMBS = 14;
+  // Five rows of graves, smallest at the back, so a big haunting still fits on screen.
+  const ROWS = [{ y: 0.7, s: 0.5, z: 1 }, { y: 0.76, s: 0.6, z: 2 }, { y: 0.83, s: 0.74, z: 3 }, { y: 0.91, s: 0.87, z: 5 }, { y: 0.995, s: 1, z: 6 }];
+  const MAX_TOMBS = 40;
   const poses = {};
   patrol.querySelectorAll('[data-pose]').forEach((i) => { poses[i.dataset.pose] = i; });
   let pose = 'search', poseTimer = null;
@@ -89,56 +90,99 @@ window.Yard = (() => {
     if (!p.startsWith('/')) return 'pointing to ' + p.split('/')[0];
     return 'on ' + (p.length > 34 ? p.slice(0, 33) + '…' : p);
   };
-  let lastBig = 0;
-  const bigQueue = [];
+  const SAYN = {
+    dead: 'links that lead nowhere',
+    possessed: "links that land on someone else's site",
+    'past-event': 'events that already happened',
+    'stale-year': 'copyright years stuck in the past',
+    nameless: 'pages with no title',
+    chain: 'links that take the long way round',
+    speechless: 'pages with no description',
+  };
+  let overflow = 0, sign = null;
   const found = (kind, path, K) => {
+    // Once the yard is full, the rest are counted on a sign instead of piling up unreadably.
+    if (tombs.length >= MAX_TOMBS) {
+      overflow++;
+      if (!sign) { sign = document.createElement('div'); sign.className = 'yard-sign'; ground.appendChild(sign); }
+      sign.innerHTML = `<b>+${overflow}</b><span>more graves</span>`;
+      queue.push({ kind, path, el: null });
+      run();
+      return;
+    }
     const spot = freeSpot(S.fx);
     const el = document.createElement('div');
-    el.className = `tomb k-${kind}`;
+    el.className = `tomb k-${kind} waiting`;
     const v = (hash(path + kind) % VARIANTS) + 1;
     const carved = (path || '').replace(/^https?:\/\//, '');
-    const stone = (cls) => `
-      <img class="tomb-spirit" src="art/spirit-${kind}.webp" alt="" onerror="this.remove()">
-      <div class="tomb-stone">
-        <img class="tomb-img" src="art/tomb-${v}.webp" alt="" onerror="this.parentNode.classList.add('no-art')">
-        <div class="tomb-carve v${v}"><i>R.I.P.</i><b>${esc(CARVE[kind] || 'Gone')}</b></div>
-      </div>${cls || ''}`;
-    el.innerHTML = stone('<div class="tomb-dirt"></div>');
+    el.innerHTML = stoneHtml(kind, v) + '<div class="tomb-dirt"></div>';
     el.title = `${K.name}: ${carved}`;
     ground.appendChild(el);
     const t = { el, row: spot.row, fx: spot.fx, kind };
     tombs.push(t);
     positionTomb(t);
-    const point = () => { S.face = spot.fx >= S.fx ? 1 : -1; setPose('point', 1700); };
-    if (tombs.length > MAX_TOMBS) {
-      const old = tombs.shift();
-      old.el.classList.add('sinking');
-      setTimeout(() => old.el.remove(), 1200);
+    queue.push({ kind, path, el, fx: spot.fx, v, K });
+    run();
+  };
+  const stoneHtml = (kind, v) => `
+      <img class="tomb-spirit" src="art/spirit-${kind}.webp" alt="" onerror="this.remove()">
+      <div class="tomb-stone">
+        <img class="tomb-img" src="art/tomb-${v}.webp" alt="" onerror="this.parentNode.classList.add('no-art')">
+        <div class="tomb-carve v${v}"><i>R.I.P.</i><b>${esc(CARVE[kind] || 'Gone')}</b></div>
+      </div>`;
+  const rise = (item) => { if (item.el) { item.el.classList.remove('waiting'); item.el.classList.add('risen', 'landed'); } };
+  const point = (fx) => { S.face = fx >= S.fx ? 1 : -1; setPose('point', 1700); };
+
+  // Every ghost gets its moment in the big tombstone, in order. When they pour in, ghosts of the same kind
+  // that are waiting together share one stone ("4 links that lead nowhere"), so the line never backs up.
+  const queue = [];
+  let running = false, flushing = false;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const run = async () => {
+    if (running) return;
+    running = true;
+    while (queue.length) {
+      const head = queue.shift();
+      const group = [head];
+      if (queue.length >= 2) for (let i = 0; i < queue.length; i++) if (queue[i].kind === head.kind) { group.push(queue[i]); queue.splice(i, 1); i--; }
+      if (flushing || !document.body.classList.contains('on-yard')) { group.forEach(rise); continue; }
+      await showBig(group, queue.length);
     }
-    // The first ghost of each moment gets the full-screen tombstone; rapid ones just rise in place.
-    const now = Date.now();
-    if (still() || now - lastBig < 2600) { requestAnimationFrame(() => el.classList.add('risen')); point(); return; }
-    lastBig = now;
-    el.classList.add('waiting');
+    running = false;
+  };
+  const showBig = async (group, behind) => {
+    const head = group[0], n = group.length, kind = head.kind;
     const big = document.createElement('div');
     big.className = `tomb-big k-${kind}`;
-    big.innerHTML = `<div class="tomb tomb-hero risen">${stone()}</div>
-      <p class="tomb-say"><b>${esc(SAY[kind] || K.one)}</b><span>${esc(where(path))}</span></p>`;
+    const places = group.map((g) => where(g.path));
+    const line = n === 1 ? (SAY[kind] || kind) : `${n} ${SAYN[kind] || kind}`;
+    const sub = n === 1 ? places[0] : `${places.slice(0, 2).join(', ')}${n > 2 ? ` and ${n - 2} more` : ''}`;
+    big.innerHTML = `<div class="tomb tomb-hero risen">${stoneHtml(kind, head.v || 1)}</div>
+      <p class="tomb-say"><b>${esc(line)}</b><span>${esc(sub)}</span></p>`;
     document.body.appendChild(big);
     requestAnimationFrame(() => big.classList.add('on'));
-    setTimeout(() => {
-      // fly down into its place in the graveyard
-      const hero = big.querySelector('.tomb-hero');
-      const from = hero.getBoundingClientRect(), to = el.getBoundingClientRect();
-      big.classList.add('landing');
+    const hold = behind > 4 ? 800 : behind > 1 ? 1100 : 1500;
+    await sleep(hold);
+    const target = group.find((g) => g.el);
+    const hero = big.querySelector('.tomb-hero');
+    big.classList.add('landing');
+    if (target && !still()) {
+      const from = hero.getBoundingClientRect(), to = target.el.getBoundingClientRect();
       const dx = to.left + to.width / 2 - (from.left + from.width / 2), dy = to.top + to.height / 2 - (from.top + from.height / 2), sc = to.width / from.width;
-      hero.animate([{ transform: 'none' }, { transform: `translate(${dx}px, ${dy - 60}px) scale(${sc * 1.1})`, offset: 0.75 }, { transform: `translate(${dx}px, ${dy}px) scale(${sc})` }],
-        { duration: 700, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' }).finished.then(() => {
-        el.classList.remove('waiting'); el.classList.add('risen', 'landed');
-        big.remove();
-        point(); // he turns and points at the stone the moment it lands
-      }, () => big.remove());
-    }, 1500);
+      await hero.animate([{ transform: 'none' }, { transform: `translate(${dx}px, ${dy - 60}px) scale(${sc * 1.1})`, offset: 0.75 }, { transform: `translate(${dx}px, ${dy}px) scale(${sc})` }],
+        { duration: 600, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' }).finished.catch(() => {});
+    } else {
+      await sleep(350);
+    }
+    big.remove();
+    group.forEach(rise);
+    if (target) point(target.fx);
+  };
+  // The reveal waits for the line to finish; if it's still long, the rest rise at once.
+  const drain = async (max = 5000) => {
+    const t0 = Date.now();
+    while ((queue.length || running) && Date.now() - t0 < max) await sleep(100);
+    if (queue.length || running) { flushing = true; queue.splice(0).forEach(rise); document.querySelectorAll('.tomb-big').forEach((b) => b.remove()); tombs.forEach((t) => rise({ el: t.el })); await sleep(300); flushing = false; }
   };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -155,6 +199,8 @@ window.Yard = (() => {
   };
   const start = () => {
     tombs.forEach((t) => t.el.remove()); tombs = [];
+    queue.length = 0; overflow = 0; if (sign) { sign.remove(); sign = null; }
+    document.querySelectorAll('.tomb-big').forEach((b) => b.remove());
     S.fx = S.tfx = 0.14; S.vx = 0; S.face = 1; S.running = true;
     buildLamps();
     lamps.forEach((l) => l.el.classList.remove('lit'));
@@ -238,5 +284,5 @@ window.Yard = (() => {
     setTimeout(wait, 900);
     box.addEventListener('click', finish);
   });
-  return { start, progress, page, found, finish, reveal, setLamps: (l) => { LAMPS = l; buildLamps(); } };
+  return { start, progress, page, found, finish, reveal, drain, setLamps: (l) => { LAMPS = l; buildLamps(); } };
 })();

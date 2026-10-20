@@ -377,6 +377,7 @@
     const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
     const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
     if (window.Yard && document.body.classList.contains('on-yard')) {
+      await Yard.drain(skip ? 0 : 6000);
       const byKind = ORDER.filter((t) => t !== 'locked').map((t) => [t, result.ghosts.filter((g) => g.type === t && !state.banished.has(g.id)).length]).filter(([, c]) => c);
       sfx.hush();
       await sleep(skip ? 0 : 700);
