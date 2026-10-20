@@ -988,3 +988,25 @@ body.on-report .sub .tag.back { color: #ffb4a0; }
 .yard-sign { position: absolute; right: 3%; bottom: 3%; z-index: 7; display: grid; justify-items: center; padding: 10px 18px 12px; border-radius: 6px; transform: rotate(-3deg);
   background: linear-gradient(180deg, #6b4a2e, #4a3020); border: 2px solid #2e1d12; box-shadow: 0 14px 24px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.15); color: #f6e7c8; }
 .yard-sign b { font: 700 26px/1 var(--story); } .yard-sign span { font: 600 12px var(--sans); letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+
+/* ================= Verdict: emoji, claw marks, spooky gauge ================= */
+body.on-report .verdict-main { position: relative; }
+.verdict-emoji { display: inline-block; margin-left: .18em; font-style: normal; font-size: .62em; vertical-align: .18em; filter: drop-shadow(0 0 18px rgba(255,140,110,.55));
+  animation: emoji-in .8s cubic-bezier(.3,1.7,.5,1) both, emoji-haunt 3.6s 1.4s ease-in-out infinite; }
+@keyframes emoji-in { from { opacity: 0; transform: scale(.3) rotate(-30deg); } to { opacity: 1; transform: none; } }
+@keyframes emoji-haunt { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(5deg); } 72% { opacity: 1; } 74% { opacity: .45; } 76% { opacity: 1; } }
+.verdict-word[data-rank="Cursed"] { color: #ff8a7a; text-shadow: 0 0 40px rgba(255,80,60,.45), 0 0 90px rgba(180,20,20,.35); }
+.claws { position: absolute; left: min(36vw, 520px); top: -70px; width: 230px; height: 150px; pointer-events: none; z-index: 0; transform: rotate(-8deg); }
+.claws g { clip-path: inset(0 0 100% 0); animation: claw .4s cubic-bezier(.6,0,.2,1) forwards; }
+.claw-deep { fill: #5a0c12; filter: drop-shadow(0 0 8px rgba(220,40,40,.5)); }
+.claw-lit { fill: none; stroke: rgba(255,130,110,.55); stroke-width: 1.2; transform: translate(-1.5px, -1px); }
+@keyframes claw { to { clip-path: inset(0 0 0 0); } }
+body.on-report .verdict-word, body.on-report .verdict-line, body.on-report .omens { position: relative; z-index: 1; }
+body.on-report .omens dt { white-space: nowrap; }
+.g-emoji { font-size: 15px; opacity: .55; transition: opacity .6s, font-size .6s; }
+.g-emoji.now { font-size: 26px; opacity: 1; filter: drop-shadow(0 0 8px rgba(255,170,90,.9)); animation: emoji-pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes emoji-pulse { 50% { transform: scale(1.15); } }
+body.on-report .gauge-svg { overflow: visible; }
+body.calm .verdict-emoji, body.calm .g-emoji.now { animation: none; }
+body.calm .claws g { animation: none; clip-path: none; }
+@media (max-width: 860px) { .claws { left: auto; right: 0; width: 160px; height: 120px; } }

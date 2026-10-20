@@ -505,8 +505,31 @@
     const el = $('vWord');
     if (el.dataset.text === text) return;
     el.dataset.text = text;
-    el.innerHTML = text.split('').map((ch, i) => `<span style="animation-delay:${reduceMotion ? 0 : 120 + i * 70}ms">${ch === ' ' ? '&nbsp;' : esc(ch)}</span>`).join('');
+    const rank = text.replace(/\.$/, '');
+    el.innerHTML = text.split('').map((ch, i) => `<span style="animation-delay:${reduceMotion ? 0 : 120 + i * 70}ms">${ch === ' ' ? '&nbsp;' : esc(ch)}</span>`).join('')
+      + `<i class="verdict-emoji" aria-hidden="true" style="animation-delay:${reduceMotion ? 0 : 200 + text.length * 70}ms">${RANK_EMOJI[rank] || '👻'}</i>`;
+    el.dataset.rank = rank;
   };
+  const RANK_EMOJI = { 'At peace': '🌙', Restless: '🕯️', Haunted: '👻', Infested: '🕷️', Cursed: '💀' };
+  // Claw marks across the verdict, as if something tried to get out.
+  const CLAWS = (() => {
+    // four tapered, ragged gouges, thick in the middle and sharp at both ends
+    let seed = 7; const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+    const gouge = (x0, y0, x1, y1, w) => {
+      const L = [], R = [], n = 22;
+      for (let k = 0; k <= n; k++) {
+        const t = k / n, bend = Math.sin(t * Math.PI) * 14;
+        const x = x0 + (x1 - x0) * t + bend, y = y0 + (y1 - y0) * t;
+        const half = Math.pow(Math.sin(t * Math.PI), 0.7) * w * (0.75 + rnd() * 0.5);
+        const nx = (y1 - y0), ny = -(x1 - x0), nl = Math.hypot(nx, ny);
+        L.push(`${(x + nx / nl * half).toFixed(1)},${(y + ny / nl * half).toFixed(1)}`);
+        R.unshift(`${(x - nx / nl * half * 0.6).toFixed(1)},${(y - ny / nl * half * 0.6).toFixed(1)}`);
+      }
+      return `M${L.join(' L')} L${R.join(' L')} Z`;
+    };
+    const marks = [0, 1, 2, 3].map((i) => gouge(40 + i * 46, 8 + i * 10, 70 + i * 50, 170 - Math.abs(i - 1.5) * 18, 7 + (i === 1 || i === 2 ? 2 : 0)));
+    return `<svg class="claws" viewBox="0 0 300 200" aria-hidden="true">${marks.map((d, i) => `<g style="animation-delay:${700 + i * 80}ms"><path class="claw-deep" d="${d}"/><path class="claw-lit" d="${d}"/></g>`).join('')}</svg>`;
+  })();
 
   const paintSummary = () => {
     const r = state.result;
@@ -518,17 +541,19 @@
       ? `${fmt(left)} ghost${left === 1 ? ' is' : 's are'} living in these pages, and your visitors are walking right into them. ${top.length ? 'Start with the ' + top.map((t) => count(alive(t).length, t)).join(', then the ') + '.' : ''}${state.returned.size ? ` ${fmt(state.returned.size)} you marked fixed last time ${state.returned.size === 1 ? 'is' : 'are'} still here.` : ''}${state.goneForGood ? ` ${fmt(state.goneForGood)} you fixed ${state.goneForGood === 1 ? 'is' : 'are'} gone for good.` : ''}${state.banished.size ? ` ${fmt(state.banished.size)} banished so far.` : ''}`
       : r.ghostCount ? 'Every ghost banished. Publish your fixes, then search the house again to make sure they stay gone.' : 'Not a single ghost on the pages we searched. Links rot quietly, so come back in a few weeks, or hire the night watchman.';
     $('omens').innerHTML = `
-      <div class="bad"><dt>Ghosts found</dt><dd>${fmt(left)}</dd></div>
-      <div class="bad"><dt>Dead links</dt><dd>${fmt(alive('dead').length)}</dd></div>
-      <div><dt>Rooms searched</dt><dd>${fmt(r.pagesScanned)}</dd></div>
-      <div><dt>Doors tried</dt><dd>${fmt(r.linksChecked)}</dd></div>`;
+      <div class="bad"><dt>👻 Ghosts found</dt><dd>${fmt(left)}</dd></div>
+      <div class="bad"><dt>🪦 Dead links</dt><dd>${fmt(alive('dead').length)}</dd></div>
+      <div><dt>🏚️ Pages checked</dt><dd>${fmt(r.pagesScanned)}</dd></div>
+      <div><dt>🔗 Links tested</dt><dd>${fmt(r.linksChecked)}</dd></div>`;
     const frac = Math.min(1, s / 200);
     requestAnimationFrame(() => {
       $('gFill').style.strokeDashoffset = String(315 * (1 - frac));
       $('gNeedle').style.transform = `rotate(${-90 + 180 * frac}deg)`;
     });
     countTo($('vScore'), s);
-    $('gaugeCap').textContent = `Haunt level · ${rankOf(s).toLowerCase()}`;
+    $('gaugeCap').textContent = `Haunt level · ${(left ? rankOf(s) : 'at peace').toLowerCase()}`;
+    const nowRank = left ? rankOf(s) : 'At peace';
+    document.querySelectorAll('#gTicks .g-emoji').forEach((e) => e.classList.toggle('now', e.dataset.rank === nowRank));
     $('spectrum').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => {
       const w = alive(t).reduce((n, g) => n + ghostScore(g), 0);
       return w ? `<span style="flex-grow:${w};background:${KINDS[t].color};color:${KINDS[t].color}" title="${esc(KINDS[t].name)}"></span>` : '';
@@ -577,15 +602,20 @@
     const r = state.result;
     $('rHost').textContent = hostOf(r.site);
     const date = new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    $('rMeta').textContent = `Searched on ${date} · ${fmt(r.pagesScanned)} rooms · ${fmt(r.linksChecked)} doors`;
+    $('rMeta').textContent = `Checked on ${date} · ${fmt(r.pagesScanned)} pages · ${fmt(r.linksChecked)} links`;
+    if (!document.querySelector('.verdict .claws')) document.querySelector('.verdict-main').insertAdjacentHTML('afterbegin', CLAWS);
     $('vScore').dataset.v = 0;
     $('vWord').dataset.text = '';
     $('gFill').style.strokeDashoffset = '315';
     $('gNeedle').style.transform = 'rotate(-90deg)';
     if (!$('gTicks').childElementCount) {
+      // tick marks at the rank boundaries, and each rank's emoji in the middle of its band
       $('gTicks').innerHTML = [0, .1, .25, .5, 1].map((f) => {
         const a = Math.PI * (1 - f);
         return `<line x1="${120 + Math.cos(a) * 86}" y1="${130 - Math.sin(a) * 86}" x2="${120 + Math.cos(a) * 78}" y2="${130 - Math.sin(a) * 78}"/>`;
+      }).join('') + [['At peace', 0], ['Restless', .05], ['Haunted', .175], ['Infested', .375], ['Cursed', .75]].map(([k, f]) => {
+        const a = Math.PI * (1 - f), rr = 124;
+        return `<text class="g-emoji" data-rank="${k}" x="${(120 + Math.cos(a) * rr).toFixed(1)}" y="${(130 - Math.sin(a) * rr).toFixed(1)}" text-anchor="middle" dominant-baseline="central">${RANK_EMOJI[k]}</text>`;
       }).join('');
     }
     $('findings').innerHTML = `<div class="peace" id="peaceBlock" hidden><h2>The house is at peace.</h2><p>Nothing left to banish on the pages we searched.</p></div>`
