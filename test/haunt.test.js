@@ -90,3 +90,15 @@ test('switching to a different site closes the old issue and opens a fresh one',
   assert.equal(gh.issues[0].state, 'closed');
   assert.match(gh.issues[1].title, /other\.com/);
 });
+
+test('the haunt @mentions you so GitHub actually emails you', async () => {
+  const gh = fakeGitHub();
+  await haunt(scanOf([ghost('a')]), gh, { mention: 'raoashwini21' });
+  assert.match(gh.issues[0].body, /@raoashwini21/);
+  await haunt(scanOf([ghost('a'), ghost('b')]), gh, { mention: 'raoashwini21' });
+  assert.match(gh.issues[0].comments[0], /^👻 @raoashwini21 /);
+  // other sites' links show the full address, your own pages just the path
+  await haunt(scanOf([ghost('a'), ghost('b'), ghost('n', { url: 'https://n/' })]), gh, { mention: 'raoashwini21' });
+  assert.match(gh.issues[0].comments[1], /`https:\/\/n\/`/);
+  assert.match(gh.issues[0].body, /`\/a`/);
+});

@@ -19,4 +19,4 @@ jobs:
       - uses: raoashwini21/graveyard-shift@main
         with:
           site: ${{ vars.HAUNT_SITE }}
-          max-pages: '100'
+          max-pages: '300'

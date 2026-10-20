@@ -5,13 +5,12 @@
 // - No ghosts left: comments "at peace" and closes the issue.
 // The previous scan is remembered inside the issue body, so nothing is committed to your repo.
 
-import { toMarkdown, diffScans } from './report.js';
+import { toMarkdown, diffScans, short } from './report.js';
 
 export const LABEL = 'graveyard-shift';
 const STATE_RE = /<!-- graveyard-shift-state:([A-Za-z0-9+/=]+) -->/;
 
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } };
-const short = (url) => { try { const u = new URL(url); return u.pathname + u.search; } catch { return url; } };
 
 export function encodeState(result) {
   const ghosts = result.ghosts
@@ -31,8 +30,9 @@ export function issueTitle(result) {
   return `👻 ${n} ghost${n === 1 ? '' : 's'} haunt${n === 1 ? 's' : ''} ${hostOf(result.site)}`;
 }
 
-export function issueBody(result, diff) {
+export function issueBody(result, diff, mention) {
   return [
+    ...(mention ? [`👋 @${mention}, your site is haunted.`, ''] : []),
     toMarkdown(result, { diff }),
     '',
     '---',
@@ -43,14 +43,14 @@ export function issueBody(result, diff) {
   ].join('\n');
 }
 
-export function newGhostsComment(result, added, banished) {
+export function newGhostsComment(result, added, banished, mention) {
   const host = hostOf(result.site);
   const lines = [
-    `👻 **${added.length} new ghost${added.length === 1 ? '' : 's'} moved into ${host} this week.**`,
+    `👻 ${mention ? `@${mention} ` : ''}**${added.length} new ghost${added.length === 1 ? '' : 's'} moved into ${host} this week.**`,
     '',
   ];
   for (const g of added) {
-    const subject = g.quote ? `“${g.quote}”` : `\`${short(g.url)}\``;
+    const subject = g.quote ? `“${g.quote}”` : `\`${short(g.url, result.site)}\``;
     lines.push(`- **${g.name}**: ${g.label}  `);
     lines.push(`  ${subject} on ${short(g.foundOn[0])}${g.foundOn.length > 1 ? ` and ${g.foundOn.length - 1} more` : ''}  `);
     lines.push(`  Fix: ${g.fix}`);
@@ -61,7 +61,7 @@ export function newGhostsComment(result, added, banished) {
 
 // gh: { findOpenIssue(label), createIssue({title, body, labels}), updateIssue(n, {title, body, state}),
 //       comment(n, body), ensureLabel(name) }
-export async function haunt(result, gh) {
+export async function haunt(result, gh, { mention = null } = {}) {
   await gh.ensureLabel(LABEL);
   let issue = await gh.findOpenIssue(LABEL);
 
@@ -74,22 +74,22 @@ export async function haunt(result, gh) {
 
   if (!issue) {
     if (result.ghostCount === 0) return { action: 'none', reason: 'at peace, no issue to update' };
-    const created = await gh.createIssue({ title: issueTitle(result), body: issueBody(result, null), labels: [LABEL] });
+    const created = await gh.createIssue({ title: issueTitle(result), body: issueBody(result, null, mention), labels: [LABEL] });
     return { action: 'opened', issue: created.number, added: result.ghostCount };
   }
 
   const { added, banished } = diffScans(prevState, { ghosts: result.ghosts.filter((g) => g.type !== 'locked') });
 
   if (result.ghostCount === 0) {
-    await gh.updateIssue(issue.number, { title: `✨ ${hostOf(result.site)} is at peace`, body: issueBody(result, { added: [], banished }) });
-    await gh.comment(issue.number, `✨ **Your site is at peace.** Every ghost has been banished. Closing this until something new moves in.`);
+    await gh.updateIssue(issue.number, { title: `✨ ${hostOf(result.site)} is at peace`, body: issueBody(result, { added: [], banished }, null) });
+    await gh.comment(issue.number, `✨ ${mention ? `@${mention} ` : ''}**Your site is at peace.** Every ghost has been banished. Closing this until something new moves in.`);
     await gh.updateIssue(issue.number, { state: 'closed' });
     return { action: 'closed', issue: issue.number, banished: banished.length };
   }
 
-  await gh.updateIssue(issue.number, { title: issueTitle(result), body: issueBody(result, { added, banished }) });
+  await gh.updateIssue(issue.number, { title: issueTitle(result), body: issueBody(result, { added, banished }, mention) });
   if (added.length) {
-    await gh.comment(issue.number, newGhostsComment(result, added, banished));
+    await gh.comment(issue.number, newGhostsComment(result, added, banished, mention));
     return { action: 'haunted', issue: issue.number, added: added.length, banished: banished.length };
   }
   return { action: 'updated quietly', issue: issue.number, added: 0, banished: banished.length };

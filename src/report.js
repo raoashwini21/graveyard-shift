@@ -3,10 +3,16 @@
 
 const ICON = { dead: '🪦', possessed: '👹', chain: '🌀', nameless: '👤', speechless: '🤐', 'stale-year': '🕰️', 'past-event': '🎃', locked: '🔒' };
 
-const short = (url) => {
+// Show just the path for your own pages, the full address for anything else.
+export const short = (url, site) => {
   if (!url) return '';
   if (url === 'sitemap.xml') return 'sitemap.xml';
-  try { const u = new URL(url); return u.pathname + u.search; } catch { return url; }
+  try {
+    const u = new URL(url);
+    const host = (h) => h.replace(/^www\./, '');
+    if (site && host(u.hostname) !== host(new URL(site).hostname)) return url;
+    return u.pathname + u.search;
+  } catch { return url; }
 };
 
 // Which ghosts are new since last time, and which were banished.
@@ -110,7 +116,7 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
   const rows = (list) => {
     out.push('| | Ghost | Where | Fix |', '| --- | --- | --- | --- |');
     for (const g of list) {
-      const subject = g.quote ? `“${g.quote.replace(/\|/g, '\\|')}”` : `\`${short(g.url)}\``;
+      const subject = g.quote ? `“${g.quote.replace(/\|/g, '\\|')}”` : `\`${short(g.url, result.site)}\``;
       const tag = g.confidence === 'maybe' ? ' *(maybe)*' : g.confidence === 'unverified' ? ' *(unverified)*' : '';
       const fresh = newIds.has(g.id) ? ' 🆕' : '';
       out.push(`| ${ICON[g.type] || '👻'} | **${g.name}**${tag}${fresh}<br>${g.label}<br>${subject} | ${where(g).replace(/^on /, '')} | ${g.fix.replace(/\|/g, '\\|')} |`);
@@ -129,7 +135,7 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
   for (const n of limitNotes(result)) out.push(`> ${n}`, '');
   if (diff?.banished.length) {
     out.push('<details><summary>✨ Banished since last scan</summary>', '');
-    for (const g of diff.banished) out.push(`- ~~${g.name}: ${g.quote || short(g.url)}~~`);
+    for (const g of diff.banished) out.push(`- ~~${g.name}: ${g.quote || short(g.url, result.site)}~~`);
     out.push('', '</details>', '');
   }
   out.push(`<sub>Scanned ${result.scannedAt.slice(0, 16).replace('T', ' ')} UTC by Graveyard Shift.</sub>`);

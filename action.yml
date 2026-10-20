@@ -17,6 +17,10 @@ inputs:
     description: Set to true to skip links to other sites
     required: false
     default: 'false'
+  mention:
+    description: GitHub username to @mention so they get an email (defaults to the repo owner; "none" to turn off)
+    required: false
+    default: ''
   token:
     description: Token used to open and update the issue
     required: false
@@ -38,4 +42,5 @@ runs:
         HAUNT_SITE: ${{ inputs.site }}
         HAUNT_MAX_PAGES: ${{ inputs.max-pages }}
         HAUNT_INTERNAL_ONLY: ${{ inputs.internal-only }}
+        HAUNT_MENTION: ${{ inputs.mention }}
         GITHUB_TOKEN: ${{ inputs.token }}

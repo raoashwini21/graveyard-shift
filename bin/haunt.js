@@ -48,7 +48,10 @@ if (!env.GITHUB_TOKEN || !env.GITHUB_REPOSITORY) {
 
 try {
   const gh = githubClient({ token: env.GITHUB_TOKEN, repo: env.GITHUB_REPOSITORY, apiUrl: env.GITHUB_API_URL });
-  const outcome = await haunt(result, gh);
+  // @mention someone so GitHub actually emails them. Defaults to the repo owner.
+  const raw = (env.HAUNT_MENTION || env.GITHUB_REPOSITORY_OWNER || '').replace(/^@/, '').trim();
+  const mention = raw && raw !== 'none' ? raw : null;
+  const outcome = await haunt(result, gh, { mention });
   const msg = {
     opened: `👻 Opened issue #${outcome.issue} with ${outcome.added} ghosts.`,
     haunted: `👻 ${outcome.added} new ghosts. Commented on issue #${outcome.issue}.`,
