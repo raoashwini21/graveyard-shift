@@ -5,13 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graveyard Shift — your website is haunted</title>
 <meta name="description" content="Graveyard Shift searches every room of your website for dead links, hijacked links, frozen copyright years and expired events, then hands you the fix. Free and open source.">
+<link rel="preload" href="fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="art/ghost-idle.webp" as="image">
 <link rel="preload" href="fonts/pirata.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/elite.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M14 60V24a18 18 0 0 1 36 0v36z' fill='%235e3a29' stroke='%23c9a060' stroke-width='4'/><circle cx='42' cy='40' r='3.5' fill='%23c9a060'/></svg>">
 </head>
-<body>
+<body class="on-landing">
 <!-- The hallway: atmosphere only, never content -->
 <div class="chamber" aria-hidden="true">
   <div class="hall" id="hall"></div>
@@ -38,6 +40,7 @@
   <a class="mark" href="/" id="home">Graveyard Shift</a>
   <nav class="top-nav">
     <button class="nav-btn" id="plainBtn" aria-pressed="false">Plain report</button>
+    <button class="nav-btn" id="calmBtn" aria-pressed="false">Calm mode</button>
     <button class="nav-btn" id="soundBtn" aria-pressed="false">Sound off</button>
   </nav>
 </header>
@@ -45,33 +48,52 @@
 <main>
   <!-- Landing: the ritual -->
   <section class="view landing" id="landing">
-    <div class="ritual">
-      <p class="kicker">Free · open source · no sign-up</p>
-      <h1>Your website is haunted.</h1>
-      <p class="lede">Links that lead nowhere. Links that now sell someone else's product. A copyright year frozen in 2021. A webinar that ended last spring, still taking sign-ups. Graveyard Shift searches every room of your site, drags each ghost into the light and tells you exactly how to get rid of it.</p>
-      <div class="altar">
-        <div class="dial-slot" id="heroSlot"></div>
-        <form class="offering" id="ask" novalidate>
-          <label class="sr-only" for="url">Website address</label>
-          <div class="field">
-            <span class="prefix" aria-hidden="true">https://</span>
-            <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" spellcheck="false" required>
-            <button class="btn primary" type="submit">Open the door</button>
-          </div>
-          <div class="opts">
-            <label class="opt">Rooms to search
-              <select id="maxPages">
-                <option value="50">50</option>
-                <option value="100" selected>100</option>
-                <option value="200">200</option>
-              </select>
-            </label>
-            <label class="opt check"><input type="checkbox" id="external" checked> Also rattle other sites' doors</label>
-          </div>
-          <p class="error" id="error" role="alert"></p>
-        </form>
+    <section class="hero" id="hero" aria-labelledby="heroTitle">
+      <div class="hero-art" aria-hidden="true">
+        <img class="hero-bg" src="art/bg.webp" alt="" decoding="async" fetchpriority="high">
+        <div class="hero-shade"></div>
+        <div class="hero-mist m1"></div><div class="hero-mist m2"></div>
+        <div class="fireflies" id="fireflies"></div>
       </div>
-    </div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="hero-kicker"><span class="hk-dot"></span>Free website check · open source · no sign-up</p>
+          <h1 class="hero-title" id="heroTitle">Your website is <em>haunted.</em></h1>
+          <p class="hero-lede">Dead links. Links that now land on someone else's site. Copyright years stuck in 2021. Webinars that ended months ago. Our ghost walks every page of your site, finds them all, and tells you exactly how to fix each one.</p>
+          <form class="offering" id="ask" novalidate>
+            <label class="sr-only" for="url">Website address</label>
+            <div class="field" id="field">
+              <span class="field-light" aria-hidden="true"></span>
+              <span class="prefix" aria-hidden="true">https://</span>
+              <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" spellcheck="false" required>
+              <span class="measure" id="measure" aria-hidden="true"></span>
+              <button class="cta" id="cta" type="submit"><span>Find my ghosts</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+            <div class="opts">
+              <label class="opt">Pages to check
+                <select id="maxPages">
+                  <option value="50">50</option>
+                  <option value="100" selected>100</option>
+                  <option value="200">200</option>
+                </select>
+              </label>
+              <label class="opt check"><input type="checkbox" id="external" checked> Also check links to other sites</label>
+            </div>
+            <p class="error" id="error" role="alert"></p>
+          </form>
+        </div>
+      </div>
+      <div class="wisp" id="wisp" aria-hidden="true">
+        <div class="wisp-glow"></div>
+        <div class="wisp-pose">
+          <img data-pose="idle" class="on" src="art/ghost-idle.webp" alt="">
+          <img data-pose="peek" src="art/ghost-peek.webp" alt="">
+          <img data-pose="gasp" src="art/ghost-gasp.webp" alt="">
+          <img data-pose="happy" src="art/ghost-happy.webp" alt="">
+        </div>
+        <div class="wisp-shadow"></div>
+      </div>
+    </section>
 
     <section class="index-section" aria-labelledby="revealsTitle">
       <div class="section-head">
@@ -180,6 +202,7 @@
 <script src="haunt.js"></script>
 <script src="ghosts.js"></script>
 <script src="app.js"></script>
+<script src="hero.js"></script>
 <script type="module" src="hall3d.js"></script>
 </body>
 </html>

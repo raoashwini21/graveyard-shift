@@ -141,11 +141,12 @@
   const show = (name) => {
     current = name;
     for (const v of ['landing', 'scan', 'report']) $(v).classList.toggle('on', v === name);
-    if (name === 'landing') { $('heroSlot').appendChild(doorEl); door.shut(); door.label('Knock'); door.progress(0); }
+    document.body.classList.toggle('on-landing', name === 'landing');
+    if (name === 'landing') { door.shut(); door.label('Knock'); door.progress(0); }
     if (name === 'scan') { $('scanSlot').appendChild(doorEl); door.shut(); door.progress(0); }
     window.scrollTo({ top: 0, behavior: 'auto' });
-    Haunt.scene(name);
-    if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .door, .index-section h2', presence: 0.9 }); setTimeout(() => current === 'landing' && Ghosts.idle(2), 900); }
+    Haunt.scene(name === 'landing' ? 'quiet' : name);
+    if (name === 'landing') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.ritual h1, .lede, .field, .opts, .door, .index-section h2', presence: 0.9 }); }
     if (name === 'scan') { Ghosts.pickable(null); Ghosts.clear(); Ghosts.setting({ avoid: '.scan-copy > *, .evidence > *, .door', presence: 0.95 }); }
     if (name === 'report') Ghosts.setting({ avoid: '.report-head > *, .verdict-main > *, .gauge, .casefile, .toc, .limits', presence: 0.55 });
     if (name === 'landing') { idleSpoken = 0; lastTyped = Date.now(); }
@@ -184,7 +185,6 @@
     <span class="top-row"><span class="icon">${ICONS[t]}</span><span class="stamp" style="--ink:${KINDS[t].color}">${KINDS[t].stamp}</span></span>
     <span class="name">${KINDS[t].name}</span><span class="kind">${cap(KINDS[t].many)}</span><span class="desc">${KINDS[t].meaning}</span><span class="epitaph">${KINDS[t].epitaph}</span></li>`).join('');
   show('landing');
-  idle();
 
   // ---------- The séance (scan) ----------
   let source = null;
