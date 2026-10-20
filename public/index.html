@@ -35,9 +35,9 @@ f.onsubmit = (e) => {
   es.addEventListener('done', (m) => {
     es.close();
     const r = JSON.parse(m.data);
-    log.textContent = r.ghostCount ? r.ghostCount + ' GHOSTS FOUND · score ' + r.score + ' (' + r.rank + ')' : 'Your site is at peace.';
+    log.textContent = r.ghostCount ? r.ghostCount + (r.ghostCount === 1 ? ' GHOST' : ' GHOSTS') + ' FOUND · score ' + r.score + ' (' + r.rank + ')' : 'Your site is at peace.';
     out.innerHTML = r.ghosts.map((g) => '<div class="g"><b>' + esc(g.name) + '</b> <i>' + esc(g.label) + '</i>' +
-      '<small>' + esc(g.quote ? '"' + g.quote + '"' : g.url) + '</small><small>Fix: ' + esc(g.fix) + '</small></div>').join('');
+      '<small>' + esc(g.quote ? '"' + g.quote + '"' : g.url) + '</small><small>Found on ' + esc(g.foundOn[0]) + (g.foundOn.length > 1 ? ' and ' + (g.foundOn.length - 1) + ' more' : '') + '</small><small>Fix: ' + esc(g.fix) + '</small></div>').join('');
   });
   es.addEventListener('fail', (m) => { es.close(); log.textContent = JSON.parse(m.data).message; });
   es.onerror = () => { es.close(); if (!out.innerHTML) log.textContent = 'Lost the connection to the scanner.'; };

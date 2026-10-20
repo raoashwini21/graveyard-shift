@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Graveyard Shift CLI.
-//   graveyard-shift <url> [--max-pages 50] [--external] [--format text|md|json|csv]
+//   graveyard-shift <url> [--max-pages 50] [--internal-only] [--format text|md|json|csv]
 //                         [--out file] [--state prev.json] [--fail-on-ghosts] [--ignore /path]
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -12,7 +12,9 @@ const HELP = `Graveyard Shift: find the ghosts on your website.
 Usage: graveyard-shift <url> [options]
 
   --max-pages <n>     Pages to scan (default 50)
-  --external          Also check links to other sites
+  --max-links <n>     Links to check (default 1000; your own links go first)
+  --internal-only     Skip links to other sites
+  --show-locked       List every link we couldn't verify, not just a summary
   --format <f>        text (default), md, json or csv
   --out <file>        Write the report to a file
   --state <file>      Compare with a previous JSON result, report only what's new
@@ -30,6 +32,9 @@ function parseArgs(argv) {
     if (k === '-h' || k === '--help') a.help = true;
     else if (k === '--max-pages') a.maxPages = Number(next());
     else if (k === '--external') a.external = true;
+    else if (k === '--internal-only') a.internalOnly = true;
+    else if (k === '--max-links') a.maxLinks = Number(next());
+    else if (k === '--show-locked') a.showLocked = true;
     else if (k === '--format') a.format = next();
     else if (k === '--out') a.out = next();
     else if (k === '--state') a.state = next();
@@ -52,7 +57,8 @@ if (configPath) config = JSON.parse(readFileSync(configPath, 'utf8'));
 const options = {
   ...config,
   ...(args.maxPages ? { maxPages: args.maxPages } : {}),
-  ...(args.external ? { external: true } : {}),
+  ...(args.maxLinks ? { maxLinks: args.maxLinks } : {}),
+  ...(args.internalOnly ? { external: false } : {}),
   ignore: [...(config.ignore || []), ...args.ignore],
 };
 
@@ -79,7 +85,7 @@ try {
   if (format === 'json') output = JSON.stringify({ ...result, diff: diff && { added: diff.added.map((g) => g.id), banished: diff.banished.map((g) => g.id) } }, null, 2);
   else if (format === 'md') output = toMarkdown(result, { diff });
   else if (format === 'csv') output = toCsv(result);
-  else output = toText(result, { color: process.stdout.isTTY && !args.out });
+  else output = toText(result, { color: process.stdout.isTTY && !args.out, showLocked: args.showLocked });
 
   if (args.out) writeFileSync(args.out, output + '\n');
   else console.log(output);

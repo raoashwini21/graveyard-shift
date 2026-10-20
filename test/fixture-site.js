@@ -31,7 +31,8 @@ const routes = {
     <a href="/files/guide.pdf">Guide (PDF)</a>
     <a href="/noindex-page">Hidden</a>
     <a href="/untitled">Untitled</a>
-    <a href="/admin">Admin</a>`)],
+    <a href="/admin">Admin</a>
+    <a href="https://n">Typo link</a>`)],
   '/about': () => [200, 'text/html', page('About Spooky Co', '<p>We are friendly ghosts.</p><a href="/">Home</a>', { footer: FOOTER_OK })],
   '/events': () => [200, 'text/html', page('Events', `
     <h2>Upcoming webinar: Growth Night</h2>

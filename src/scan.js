@@ -9,8 +9,11 @@ import { GHOST_TYPES, describe, scoreGhosts, sortGhosts } from './ghosts.js';
 
 export const DEFAULTS = {
   maxPages: 50,
-  maxLinks: 500,
-  external: false,
+  maxLinks: 1000,
+  // Links to other sites are where most dead links hide, so they're on by default.
+  external: true,
+  // Sites that hide pages from bots. A 404 from these is "locked", never "dead".
+  botShy: ['linkedin.com', 'x.com', 'twitter.com', 'facebook.com', 'instagram.com', 'threads.net', 'tiktok.com', 'medium.com', 'quora.com'],
   concurrency: 4,
   delayMs: 150,
   timeoutMs: 10000,
@@ -161,7 +164,11 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   const capped = frontier.some((u) => !visited.has(u) && !NON_PAGE.test(u));
 
   // Check every link
-  let toCheck = [...linksFound.keys()].filter((u) => (opts.external || sameSite(u)) && allowed(u));
+  // Your own links first, so a cap never skips them in favour of other sites.
+  let toCheck = [...linksFound.keys()]
+    .filter((u) => (opts.external || sameSite(u)) && allowed(u))
+    .sort((a, b) => Number(sameSite(b)) - Number(sameSite(a)));
+  const linksTotal = toCheck.length;
   const linksCapped = toCheck.length > opts.maxLinks;
   toCheck = toCheck.slice(0, opts.maxLinks);
   emit({ type: 'phase', phase: 'knocking on every door', linksTotal: toCheck.length });
@@ -191,12 +198,19 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
 
   let checked = 0;
   await pool(toCheck, opts.concurrency, async (url) => {
+    const foundOn = [...linksFound.get(url)];
+    // A link like https://n/ is a typo, not a site. Don't bother knocking.
+    if (isMalformed(url)) {
+      checked++;
+      emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
+      addGhost('dead', url, foundOn, { url, data: { reason: 'malformed' }, detail: { error: 'malformed' } });
+      return;
+    }
     let r = linkResults.get(url);
     if (!r) { r = await f.follow(url); linkResults.set(url, r); }
     checked++;
     emit({ type: 'link', url, linksChecked: checked, linksTotal: toCheck.length });
-    const foundOn = [...linksFound.get(url)];
-    const g = classifyLink(r);
+    const g = classifyLink(r, url, opts.botShy);
     if (g) addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
   });
 
@@ -219,17 +233,39 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     ghostCount: real.length,
     lockedCount: list.length - real.length,
     ...scoreGhosts(list),
-    limits: { pagesCapped: capped, linksCapped, robotsSkipped, maxPages: opts.maxPages, external: opts.external },
+    limits: { pagesCapped: capped, linksCapped, linksTotal, maxLinks: opts.maxLinks, robotsSkipped, maxPages: opts.maxPages, external: opts.external },
     ghosts: list,
   };
   emit({ type: 'done', result });
   return result;
 }
 
-export function classifyLink(r) {
+export function isMalformed(url) {
+  try {
+    const host = new URL(url).hostname;
+    if (host === 'localhost' || /^[\d.]+$/.test(host) || host.startsWith('[')) return false;
+    return !host.includes('.');
+  } catch {
+    return true;
+  }
+}
+
+const hostMatches = (url, domains) => {
+  try {
+    const h = new URL(url).hostname.replace(/^www\./, '');
+    return domains.some((d) => h === d || h.endsWith('.' + d));
+  } catch { return false; }
+};
+
+export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy) {
   if (['blocked', 'bad-url', 'unsupported'].includes(r.error)) return null;
   const hops = r.hops?.length || 0;
   const detail = { status: r.status ?? null, hops: r.hops || [], finalUrl: r.finalUrl, error: r.error || null };
+  // Social sites show bots a 404 or a login wall for pages that work fine for people.
+  // We can't tell, so we never call them dead.
+  if (hostMatches(url, botShy) && (r.error || r.status >= 400)) {
+    return { type: 'locked', detail: { ...detail, reason: 'this site hides pages from bots' } };
+  }
   if (r.loop) return { type: 'chain', data: { loop: true }, detail };
   if (r.error) {
     if (r.error === 'ENOTFOUND') return { type: 'dead', data: { reason: 'dns' }, detail };

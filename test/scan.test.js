@@ -1,7 +1,8 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startFixtureSite } from './fixture-site.js';
-import { scan } from '../src/scan.js';
+import { scan, classifyLink, isMalformed } from '../src/scan.js';
+import { toText } from '../src/report.js';
 import { parseRobots } from '../src/robots.js';
 
 let site;
@@ -84,4 +85,34 @@ test('robots parser: longest match wins, allow beats disallow on a tie', () => {
   assert.equal(r.isAllowed('/a.pdf'), false);
   assert.equal(r.isAllowed('/a.pdf?x=1'), true);
   assert.equal(r.isAllowed('/'), true);
+});
+
+test('a typo link like https://n/ is a broken address, found without fetching', () => {
+  const g = result.ghosts.find((x) => x.url === 'https://n/');
+  assert.ok(g);
+  assert.equal(g.type, 'dead');
+  assert.match(g.label, /address itself is broken/);
+  assert.equal(isMalformed('https://example.com/a'), false);
+  assert.equal(isMalformed('http://localhost:3000/'), false);
+});
+
+test('social sites are never called dead, only locked', () => {
+  const r = { status: 404, hops: [], finalUrl: 'https://www.linkedin.com/company/x/' };
+  assert.equal(classifyLink(r, r.finalUrl).type, 'locked');
+  const other = { status: 404, hops: [], finalUrl: 'https://example.com/x' };
+  assert.equal(classifyLink(other, other.finalUrl).type, 'dead');
+});
+
+test('locked doors are summarised by site in the text report', () => {
+  const fake = {
+    ...result,
+    ghosts: [
+      ...result.ghosts,
+      ...[1, 2, 3].map((i) => ({ id: 'g' + i, type: 'locked', name: 'Locked door', confidence: 'unverified', url: `https://www.g2.com/p/${i}`, foundOn: ['https://a.com/'], label: 'x', fix: 'y' })),
+    ],
+  };
+  const text = toText(fake);
+  assert.match(text, /g2\.com \(3\)/);
+  assert.equal(text.includes('https://www.g2.com/p/1'), false);
+  assert.ok(toText(fake, { showLocked: true }).includes('https://www.g2.com/p/1'));
 });

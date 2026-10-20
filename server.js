@@ -55,7 +55,7 @@ async function handleScan(req, res, params) {
     const maxPages = Math.min(Number(params.get('maxPages')) || 50, MAX_PAGES);
     const result = await scan(target, {
       maxPages,
-      external: params.get('external') === '1',
+      external: params.get('external') !== '0',
       allowPrivate: !HOSTED,
     }, (e) => {
       if (closed) return;

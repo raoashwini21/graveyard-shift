@@ -17,6 +17,12 @@ export const GHOST_TYPES = {
 export function describe(type, d = {}) {
   switch (type) {
     case 'dead':
+      if (d.reason === 'malformed') {
+        return {
+          label: 'A link to nowhere. The address itself is broken.',
+          fix: 'Fix the typo in the link, or remove it.',
+        };
+      }
       if (d.reason === 'dns') {
         return {
           label: 'The whole house is gone. Its domain no longer exists.',

@@ -38,7 +38,27 @@ function where(g) {
   return n === 1 ? `on ${first}` : `on ${first} and ${n - 1} more page${n > 2 ? 's' : ''}`;
 }
 
-export function toText(result, { color = false } = {}) {
+// Locked doors pile up fast on review sites like G2, so summarise them by site.
+export function lockedByDomain(ghosts) {
+  const counts = new Map();
+  for (const g of ghosts) {
+    if (g.type !== 'locked') continue;
+    let host = g.url;
+    try { host = new URL(g.url).hostname.replace(/^www\./, ''); } catch {}
+    counts.set(host, (counts.get(host) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function limitNotes(result) {
+  const l = result.limits || {};
+  const notes = [];
+  if (l.pagesCapped) notes.push(`Stopped at ${l.maxPages} pages. Raise --max-pages to scan more.`);
+  if (l.linksCapped) notes.push(`Checked ${result.linksChecked} of ${l.linksTotal} links. Raise --max-links to check the rest.`);
+  return notes;
+}
+
+export function toText(result, { color = false, showLocked = false } = {}) {
   const c = (code, s) => (color ? `\x1b[${code}m${s}\x1b[0m` : s);
   const lines = [];
   lines.push('');
@@ -51,6 +71,7 @@ export function toText(result, { color = false } = {}) {
   lines.push(c('2', `  Scanned ${result.pagesScanned} pages and ${result.linksChecked} links.`));
   lines.push('');
   for (const g of result.ghosts) {
+    if (g.type === 'locked' && !showLocked) continue;
     const tag = g.confidence === 'maybe' ? c('33', ' (maybe)') : g.confidence === 'unverified' ? c('2', ' (unverified)') : '';
     lines.push(`  ${ICON[g.type] || '👻'} ${c('1', g.name)}${tag}  ${c('3', g.label)}`);
     if (g.url && g.type !== 'stale-year' && g.type !== 'past-event') lines.push(`     ${g.url}`);
@@ -59,7 +80,15 @@ export function toText(result, { color = false } = {}) {
     lines.push(`     ${c('36', 'Fix:')} ${g.fix}`);
     lines.push('');
   }
-  if (result.limits?.pagesCapped) lines.push(c('2', `  Stopped at ${result.limits.maxPages} pages. Raise --max-pages to scan more.`));
+  const locked = lockedByDomain(result.ghosts);
+  if (locked.length && !showLocked) {
+    const total = locked.reduce((n, [, k]) => n + k, 0);
+    const top = locked.slice(0, 5).map(([h, k]) => `${h} (${k})`).join(', ');
+    lines.push(`  🔒 ${c('1', `${total} locked door${total === 1 ? '' : 's'}`)} ${c('2', "· sites that block bots, so we couldn't check them")}`);
+    lines.push(c('2', `     ${top}${locked.length > 5 ? `, and ${locked.length - 5} more sites` : ''}. Use --show-locked to list them.`));
+    lines.push('');
+  }
+  for (const n of limitNotes(result)) lines.push(c('2', `  ${n}`));
   return lines.join('\n');
 }
 
@@ -92,10 +121,12 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
   const locked = result.ghosts.filter((g) => g.type === 'locked');
   if (real.length) rows(real);
   if (locked.length) {
-    out.push(`<details><summary>🔒 ${locked.length} locked door${locked.length === 1 ? '' : 's'} (sites that block bots; open them by hand)</summary>`, '');
+    const top = lockedByDomain(locked).slice(0, 5).map(([h, k]) => `${h} (${k})`).join(', ');
+    out.push(`<details><summary>🔒 ${locked.length} locked door${locked.length === 1 ? '' : 's'}: sites that block bots, so they couldn't be checked. Mostly ${top}.</summary>`, '');
     rows(locked);
     out.push('</details>', '');
   }
+  for (const n of limitNotes(result)) out.push(`> ${n}`, '');
   if (diff?.banished.length) {
     out.push('<details><summary>✨ Banished since last scan</summary>', '');
     for (const g of diff.banished) out.push(`- ~~${g.name}: ${g.quote || short(g.url)}~~`);
