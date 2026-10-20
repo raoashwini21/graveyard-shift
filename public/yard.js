@@ -257,7 +257,7 @@ window.Yard = (() => {
     document.body.appendChild(box);
     const flight = box.querySelector('.yr-flight');
     const pool = kinds.flatMap(([k, n]) => Array(Math.min(n, 6)).fill(k));
-    const fly = pool.slice(0, 16);
+    const fly = still() ? [] : pool.slice(0, 16); // Calm mode: no ghosts flying at you
     fly.forEach((k, i) => {
       const img = document.createElement('img');
       img.src = `art/spirit-${k}.webp`; img.alt = '';
