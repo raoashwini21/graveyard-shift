@@ -80,7 +80,11 @@
     answer: () => { tone(55, 2.2, 0.22, 40); tone(110, 1.6, 0.04, 82); },
     banish: () => { tone(660, 0.9, 0.03, 1320); setTimeout(() => tone(990, 0.8, 0.015, 1760), 120); },
     restore: () => tone(330, 0.9, 0.04, 196),
+    scare: () => { tone(46, 0.9, 0.3, 30, 'sawtooth'); tone(1900, 0.35, 0.03, 900); },
+    hush: () => tone(40, 2.4, 0.12, 32),
+    lit: () => { tone(82, 2.4, 0.2, 55); tone(330, 1.8, 0.03, 247); tone(494, 2.2, 0.015, 370); },
   };
+  Haunt.onSound((name) => sfx[name] && sfx[name]());
   const soundBtn = $('soundBtn');
   const paintSound = () => { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? 'Sound on' : 'Sound off'; };
   soundBtn.onclick = () => { soundOn = !soundOn; store.set('gs:sound', soundOn); paintSound(); sfx.tick(); };
@@ -179,6 +183,7 @@
       POS[k] = { x, y };
       parts.push(`<text class="ch word" data-k="${k}" x="${x}" y="${y}" font-size="22" text-anchor="middle" dominant-baseline="central">${label}</text>`);
     }
+    parts.push(`<g class="dial-ghost"><use href="#gs-face" x="200" y="186" width="120" height="152"/></g>`);
     parts.push(`<path class="center-mark" d="M${C} ${C - 9} L${C + 9} ${C} L${C} ${C + 9} L${C - 9} ${C}Z"/>`);
     parts.push(`<g class="lens" id="lens"><circle class="halo" r="54"/><circle class="glass" r="27"/><circle class="rim" r="27"/><circle class="rim" r="31" stroke-opacity=".35"/>
       <line x1="0" y1="-40" x2="0" y2="-33"/><line x1="0" y1="33" x2="0" y2="40"/><line x1="-40" y1="0" x2="-33" y2="0"/><line x1="33" y1="0" x2="40" y2="0"/></g>`);
@@ -223,20 +228,44 @@
     if (name === 'landing') $('heroSlot').appendChild(dial);
     if (name === 'scan') $('scanSlot').appendChild(dial);
     window.scrollTo({ top: 0, behavior: 'auto' });
+    Haunt.scene(name);
+    if (name === 'landing') { idleSpoken = 0; lastTyped = Date.now(); }
   };
 
   let lastTyped = 0;
   let idleTimer = null;
+  let idleSpoken = 0;
+  let selfSpelling = false;
+  // Left alone, the planchette begins to move by itself.
+  const MESSAGES = [{ after: 11000, word: 'HELLO' }, { after: 32000, word: 'BEHINDYOU', then: () => Haunt.drift({ opacity: 0.2, height: 64, duration: 9000, y: 14 }) }];
+  const spellAlone = async (msg) => {
+    selfSpelling = true;
+    Haunt.gutter(500);
+    for (const ch of msg.word) {
+      if (current !== 'landing' || Date.now() - lastTyped < 1000) { selfSpelling = false; return; }
+      point(ch, false);
+      await sleep(760);
+    }
+    await sleep(900);
+    point(null, true);
+    selfSpelling = false;
+    if (msg.then) msg.then();
+  };
   const idle = () => {
     clearTimeout(idleTimer);
     if (reduceMotion) return;
     idleTimer = setTimeout(() => {
-      if (current === 'landing' && Date.now() - lastTyped > 4000) {
-        const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        point(keys[Math.floor(Math.random() * keys.length)], true);
+      const quiet = Date.now() - lastTyped;
+      if (current === 'landing' && !selfSpelling && !isPlain()) {
+        const next = MESSAGES[idleSpoken];
+        if (next && quiet > next.after && document.activeElement !== $('url')) { idleSpoken++; spellAlone(next); }
+        else if (quiet > 4000) {
+          const keys = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+          point(keys[Math.floor(Math.random() * keys.length)], true);
+        }
       }
       idle();
-    }, 3200);
+    }, 3000);
   };
   $('url').addEventListener('input', (e) => {
     lastTyped = Date.now();
@@ -275,6 +304,7 @@
       if (!spellQ.length && word && word !== spelled) {
         spelled = word;
         spellQ = word.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 9).split('');
+        if (Math.random() < 0.25) Haunt.gutter(350);
       }
       if (spellQ.length) point(spellQ.shift());
       spellTimer = setTimeout(step, reduceMotion ? 1000 : 440);
@@ -318,6 +348,7 @@
   };
   const felt = (e) => {
     presences++;
+    Haunt.felt(e.kind, dial.getBoundingClientRect(), presences);
     const dd = $('cGhosts');
     dd.textContent = fmt(presences);
     dd.classList.remove('pulse'); void dd.offsetWidth; dd.classList.add('pulse');
@@ -425,14 +456,14 @@
     ripple(Boolean(n));
     sfx.answer();
     setPhase(n ? `The spirits have spoken: ${fmt(n)} ghost${n === 1 ? '' : 's'}.` : 'The spirits have spoken: the house is at peace.');
-    await wait(1900);
+    await wait(1700);
+    const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
+    const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
+    await Haunt.reveal({ count: leftNow, verdict: leftNow ? rankOf(s0) : 'At peace', host: hostOf(result.site), skip: () => skip });
     document.removeEventListener('click', onSkip);
     document.removeEventListener('keydown', onSkip);
-    document.body.classList.add('revealing');
-    await sleep(700);
     document.body.classList.remove('speaking');
     renderReport();
-    requestAnimationFrame(() => document.body.classList.remove('revealing'));
   };
 
   // ---------- The reading (report) ----------
@@ -649,6 +680,7 @@
       state.banished.add(id);
       sfx.banish();
       store.set('gs:banished:' + state.result.site, [...state.banished]);
+      Haunt.release(rec);
       if (!reduceMotion) {
         const smoke = document.createElement('div');
         smoke.className = 'smoke';
@@ -701,7 +733,20 @@
     const grain = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="3"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`);
     if (grain) { x.globalAlpha = .05; x.drawImage(grain, 0, 0, W, H); x.globalAlpha = 1; }
     const sig = await loadImg($('sigil').innerHTML.replace('<svg ', '<svg width="1000" height="1000" '));
-    if (sig) { x.globalAlpha = .08; x.drawImage(sig, 925 - 330, 315 - 330, 660, 660); x.globalAlpha = 1; }
+    if (sig) { x.globalAlpha = .1; x.drawImage(sig, 925 - 340, 315 - 340, 680, 680); x.globalAlpha = 1; }
+    // lantern beam
+    if (x.createConicGradient) {
+      const beam = x.createConicGradient(-Math.PI / 2 - 0.62, 640, H + 60);
+      beam.addColorStop(0, 'rgba(245,205,140,0)'); beam.addColorStop(0.03, 'rgba(245,205,140,.10)'); beam.addColorStop(0.055, 'rgba(245,205,140,.16)');
+      beam.addColorStop(0.08, 'rgba(245,205,140,.08)'); beam.addColorStop(0.11, 'rgba(245,205,140,0)'); beam.addColorStop(1, 'rgba(245,205,140,0)');
+      x.save(); x.filter = 'blur(14px)'; x.globalCompositeOperation = 'screen'; x.fillStyle = beam; x.fillRect(0, 0, W, H); x.restore();
+    }
+    // the figure behind the dial
+    const defsMk = document.getElementById('gs-specter')?.closest('defs')?.outerHTML;
+    if (defsMk) {
+      const fig = await loadImg(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="800" viewBox="0 0 200 400">${defsMk}<use href="#gs-specter" width="200" height="400"/></svg>`);
+      if (fig) { x.save(); x.globalCompositeOperation = 'screen'; x.globalAlpha = .26; x.drawImage(fig, 1030, 40, 250, 500); x.restore(); }
+    }
 
     const host = hostOf(r.site);
     const left = aliveAll().length;
@@ -759,7 +804,16 @@
     x.fillStyle = '#bbb1a1'; x.font = 'italic 500 26px "Cormorant Garamond", Georgia, serif';
     x.fillText(left === 1 ? 'ghost' : 'ghosts', cx, cy + 52);
 
+    // brass corners and the seal line
+    x.strokeStyle = 'rgba(191,154,95,.55)'; x.lineWidth = 1.2;
+    [[28, 28, 1, 1], [W - 28, 28, -1, 1], [28, H - 28, 1, -1], [W - 28, H - 28, -1, -1]].forEach(([px, py, sx, sy]) => {
+      x.beginPath(); x.moveTo(px, py + 44 * sy); x.lineTo(px, py); x.lineTo(px + 44 * sx, py); x.stroke();
+      x.beginPath(); x.moveTo(px + 6 * sx, py + 22 * sy); x.lineTo(px + 6 * sx, py + 6 * sy); x.lineTo(px + 22 * sx, py + 6 * sy); x.stroke();
+    });
     x.textBaseline = 'alphabetic';
+    x.textAlign = 'right'; x.fillStyle = 'rgba(191,154,95,.75)'; x.font = '500 13px Inter, sans-serif';
+    x.fillText(`Sealed ${new Date(r.scannedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, W - 80, 64);
+    x.textAlign = 'left';
     x.fillStyle = 'rgba(235,227,211,.12)'; x.fillRect(80, 548, W - 160, 1);
     x.textAlign = 'left'; x.fillStyle = '#ebe3d3'; x.font = 'italic 500 24px "Cormorant Garamond", Georgia, serif';
     x.fillText('Graveyard Shift', 80, 584);

@@ -14,6 +14,9 @@
 <!-- The chamber: atmosphere only, never content -->
 <div class="chamber" aria-hidden="true">
   <div class="sigil" id="sigil"></div>
+  <div class="shade" id="shade"></div>
+  <div class="specters" id="specters"></div>
+  <div class="beam" id="beam"></div>
   <div class="fog f1"></div><div class="fog f2"></div><div class="fog f3"></div>
   <div class="candle-light cl1"></div><div class="candle-light cl2"></div>
   <canvas class="embers" id="embers"></canvas>
@@ -21,6 +24,12 @@
   <div class="grain"></div>
 </div>
 <div class="veil" id="veil" aria-hidden="true"></div>
+<div class="apparitions" id="apparitions" aria-hidden="true"></div>
+<div class="reveal-box" id="revealBox" aria-live="assertive">
+  <p class="reveal-count" id="revealCount"></p>
+  <p class="reveal-line" id="revealLine"></p>
+  <p class="reveal-verdict" id="revealVerdict"></p>
+</div>
 
 <header class="top">
   <a class="mark" href="/" id="home">Graveyard Shift</a>
@@ -146,7 +155,7 @@
           <path class="g-track" d="M20 130 A100 100 0 0 1 220 130"/>
           <path class="g-fill" id="gFill" d="M20 130 A100 100 0 0 1 220 130"/>
           <g class="g-ticks" id="gTicks"></g>
-          <g class="g-needle" id="gNeedle"><line x1="120" y1="130" x2="120" y2="44"/><circle cx="120" cy="130" r="5"/></g>
+          <g class="g-needle" id="gNeedle"><g class="tremble"><line x1="120" y1="130" x2="120" y2="44"/></g><circle cx="120" cy="130" r="5"/></g>
         </svg>
         <div class="gauge-num" id="vScore">0</div>
         <figcaption id="gaugeCap">Unrest</figcaption>
@@ -163,6 +172,7 @@
   </section>
 </main>
 
+<script src="haunt.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

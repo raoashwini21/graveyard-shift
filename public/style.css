@@ -98,6 +98,50 @@ body.felt .candle-light { background: radial-gradient(circle, rgba(170, 50, 46, 
 body.invoking .veil { opacity: .85; }
 body.revealing .veil { opacity: 1; transition-duration: .7s; }
 
+/* ================= Haunt events ================= */
+@property --beam-a { syntax: '<angle>'; inherits: false; initial-value: -60deg; }
+@property --spin { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.specters, .apparitions { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.apparitions { position: fixed; z-index: 46; }
+.specter, .face { position: absolute; left: 0; mix-blend-mode: screen; opacity: 0; will-change: transform, opacity; }
+.specter svg { height: 100%; width: auto; display: block; overflow: visible; }
+.specter.flash, .specter.wisp { position: fixed; }
+.face { position: fixed; height: 68vh; }
+.face svg { height: 100%; width: auto; display: block; filter: drop-shadow(0 0 60px rgba(230,220,200,.35)); }
+.beam {
+  position: absolute; inset: 0; opacity: 0; mix-blend-mode: screen; filter: blur(14px); transition: opacity 1.4s;
+  background: conic-gradient(from calc(var(--beam-a) - 13deg) at 50% 118%, transparent 0deg, rgba(224,163,90,.06) 7deg, rgba(245,205,140,.14) 13deg, rgba(224,163,90,.06) 19deg, transparent 26deg);
+}
+body.scanning .beam { opacity: 1; animation: sweep 11s cubic-bezier(.45,0,.55,1) infinite alternate; }
+.beam.once { animation: sweep-once 7s cubic-bezier(.45,0,.55,1) forwards; }
+@keyframes sweep { from { --beam-a: -58deg; } to { --beam-a: 58deg; } }
+@keyframes sweep-once { 0% { opacity: 0; --beam-a: -60deg; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; --beam-a: 60deg; } }
+.shade { position: absolute; left: 50%; top: -10vh; width: 55vw; height: 120vh; margin-left: -27.5vw; opacity: 0; background: radial-gradient(closest-side, rgba(0,0,0,.55), transparent); filter: blur(30px); }
+.sigil.shudder svg { animation: turn 360s linear infinite, shudder .7s steps(2) 1; }
+@keyframes shudder { 0% { opacity: 1; } 20% { opacity: 2.2; transform: rotate(var(--r, 0deg)) translate(2px, -1px); } 40% { opacity: .6; } 60% { opacity: 1.8; transform: translate(-2px, 1px); } 100% { opacity: 1; } }
+body.gutter .candle-light { opacity: .35 !important; transition: opacity .15s; }
+body.gutter .vignette { opacity: 1.2; }
+.vignette { animation: vbreathe 11s var(--slow) infinite; }
+@keyframes vbreathe { 0%, 100% { opacity: .92; } 50% { opacity: 1; transform: scale(1.03); } }
+body.blackout .candle-light, body.blackout .embers { opacity: 0 !important; transition: opacity .08s; }
+body.blackout .veil { opacity: .78; transition: opacity .08s; }
+body.hush .veil { opacity: .97; transition: opacity 1.1s var(--slow); }
+body.hush .candle-light { opacity: 0 !important; transition: opacity 1.2s; }
+body.hush .embers { opacity: .2; transition: opacity 1.2s; }
+.dial .dial-ghost { opacity: 0; mix-blend-mode: screen; }
+
+.reveal-box { position: fixed; inset: 0; z-index: 47; display: grid; place-content: center; text-align: center; pointer-events: none; opacity: 0; visibility: hidden; }
+.reveal-box.on { visibility: visible; opacity: 1; }
+.reveal-box.leaving { opacity: 0; filter: blur(10px); transition: opacity .9s var(--slow), filter .9s; }
+.reveal-count { margin: 0; font-family: var(--serif); font-weight: 500; font-size: clamp(7rem, 22vw, 17rem); line-height: .85; letter-spacing: -.03em; color: var(--bone); font-feature-settings: 'lnum' 1; }
+.reveal-box.on .reveal-count { animation: litcandle 1.6s steps(1) both, glowup 2.4s var(--slow) both; }
+@keyframes litcandle { 0% { opacity: 0; } 8% { opacity: .7; } 12% { opacity: .1; } 20% { opacity: .9; } 26% { opacity: .35; } 34%, 100% { opacity: 1; } }
+@keyframes glowup { from { text-shadow: 0 0 0 transparent; } 40% { text-shadow: 0 0 60px rgba(224,163,90,.55), 0 0 140px rgba(138,42,46,.5); } to { text-shadow: 0 0 40px rgba(224,163,90,.25), 0 0 120px rgba(138,42,46,.35); } }
+.reveal-line { margin: 18px 0 0; font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.6vw, 2.2rem); color: var(--bone-2); opacity: 0; }
+.reveal-box.on .reveal-line { animation: apparition 1.4s .7s var(--slow) both; }
+.reveal-verdict { margin: 26px 0 0; font-size: 13px; letter-spacing: .3em; text-transform: uppercase; color: var(--oxblood-text); opacity: 0; }
+.reveal-box.on .reveal-verdict { animation: apparition 1.4s 1.3s var(--slow) both; }
+
 /* ================= Shared ================= */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px;
@@ -264,7 +308,12 @@ body.scanning .dial .prog, body.speaking .dial .prog { opacity: 1; }
 .g-fill { fill: none; stroke: url(#emberGrad); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 315; stroke-dashoffset: 315; transition: stroke-dashoffset 1.6s var(--slow); filter: drop-shadow(0 0 8px rgba(224,163,90,.35)); }
 .g-ticks line { stroke: var(--bone-3); stroke-width: 1; opacity: .6; }
 .g-needle { transform-box: view-box; transform-origin: 120px 130px; transform: rotate(-90deg); transition: transform 1.6s var(--slow); }
-.g-needle line { stroke: var(--bone); stroke-width: 1.5; }
+.g-needle line { stroke: var(--bone); stroke-width: 1.5; filter: drop-shadow(0 0 3px rgba(235,227,211,.6)); }
+.g-needle .tremble { transform-box: view-box; transform-origin: 120px 130px; animation: tremble 3.4s ease-in-out infinite; }
+@keyframes tremble { 0%, 100% { transform: rotate(0); } 18% { transform: rotate(1.4deg); } 22% { transform: rotate(-.6deg); } 46% { transform: rotate(.8deg); } 71% { transform: rotate(-1.2deg); } 76% { transform: rotate(.3deg); } }
+.g-fill { animation: emberpulse 4s var(--slow) infinite; }
+@keyframes emberpulse { 0%, 100% { filter: drop-shadow(0 0 6px rgba(224,163,90,.3)); } 50% { filter: drop-shadow(0 0 16px rgba(224,163,90,.65)); } }
+.gauge-num { text-shadow: 0 0 30px rgba(224,163,90,.25); }
 .g-needle circle { fill: var(--brass); }
 .gauge-num { font-family: var(--serif); font-weight: 500; font-size: 52px; line-height: 1; margin-top: -24px; color: var(--bone); }
 .gauge figcaption { font-size: 12.5px; color: var(--bone-3); margin-top: 6px; }
@@ -277,7 +326,8 @@ body.scanning .dial .prog, body.speaking .dial .prog { opacity: 1; }
 .toc a { position: relative; display: grid; grid-template-columns: 30px 1fr auto; align-items: baseline; gap: 6px; padding: 10px 0 10px 12px; border-left: 1px solid var(--line); text-decoration: none; color: var(--bone-3); font-size: 14px; transition: color .3s, border-color .3s; }
 .toc a:hover { color: var(--bone); }
 .toc a.active { color: var(--bone); border-left-color: var(--brass); }
-.toc a.active::before { content: ''; position: absolute; left: -3px; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 10px var(--ember); transform: translateY(-50%); }
+.toc a.active::before { content: ''; position: absolute; left: -3px; top: 50%; width: 5px; height: 5px; border-radius: 50%; background: var(--brass); box-shadow: 0 0 10px var(--ember); transform: translateY(-50%); animation: dotpulse 2.4s var(--slow) infinite; }
+@keyframes dotpulse { 0%, 100% { box-shadow: 0 0 6px var(--ember); } 50% { box-shadow: 0 0 16px 3px var(--ember); } }
 .toc .n { font-family: var(--serif); font-style: italic; color: var(--brass); }
 .toc .c { font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .toc a.clear .c { color: var(--sage); }
@@ -292,6 +342,17 @@ body.scanning .dial .prog, body.speaking .dial .prog { opacity: 1; }
   content: ''; position: absolute; left: 24px; right: 24px; top: -1px; height: 1px;
   background: linear-gradient(90deg, transparent, var(--accent, var(--brass)), transparent); opacity: .8;
 }
+.casefile::after {
+  content: ''; position: absolute; inset: -1px; border-radius: 7px; padding: 1px; pointer-events: none; opacity: 0; transition: opacity 1.2s;
+  background: conic-gradient(from var(--spin), transparent 0 62%, rgba(224,163,90,.75) 74%, rgba(159,217,196,.45) 80%, transparent 90%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: spin 9s linear infinite;
+}
+@keyframes spin { to { --spin: 360deg; } }
+.casefile.active::after { opacity: 1; }
+.casefile.active .case-icon { animation: iconflicker 4.5s infinite; box-shadow: 0 0 24px -6px rgba(224,163,90,.6); }
+@keyframes iconflicker { 0%, 100% { opacity: 1; } 47% { opacity: 1; } 48% { opacity: .55; } 50% { opacity: 1; } 74% { opacity: .8; } 76% { opacity: 1; } }
+.casefile.active { background: linear-gradient(180deg, rgba(30,24,22,.94), rgba(16,13,13,.94)); }
 .casefile.active { border-color: var(--brass-dim); box-shadow: 0 40px 90px -46px rgba(138,42,46,.7), 0 0 0 1px rgba(191,154,95,.08); }
 .casefile.rested-all { opacity: .7; }
 .case-head { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 0 18px; align-items: center; padding: 24px 26px 20px; border-bottom: 1px solid var(--line); }
@@ -310,6 +371,10 @@ body.scanning .dial .prog, body.speaking .dial .prog { opacity: 1; }
   border-bottom: 1px solid var(--line);
 }
 .record:last-child { border-bottom: 0; }
+.record::before { content: ''; position: absolute; inset: 0 -26px; background: linear-gradient(90deg, rgba(159,217,196,.05), rgba(224,163,90,.03) 30%, transparent 70%); opacity: 0; transition: opacity .6s; pointer-events: none; }
+.record:hover::before { opacity: 1; }
+.record:hover .sev { box-shadow: 0 0 18px 1px rgba(190,60,56,.9); }
+.record:hover .target { text-shadow: 0 0 18px rgba(235,227,211,.18); }
 .rec-no { font: 11px/2 var(--mono); color: var(--bone-3); }
 .sev { border-radius: 2px; background: var(--oxblood); box-shadow: 0 0 10px -2px rgba(170,50,46,.8); }
 .record[data-conf="maybe"] .sev { background: repeating-linear-gradient(var(--brass) 0 4px, transparent 4px 7px); box-shadow: none; }
@@ -352,7 +417,7 @@ a.target:hover { color: #fff; text-decoration: underline; text-decoration-color:
 /* ================= Plain report ================= */
 .plain-table { display: none; }
 body.plain { background: #fbfaf7; color: #1f1d1a; }
-body.plain .chamber, body.plain .veil, body.plain .dial-slot, body.plain .gauge, body.plain .spectrum, body.plain .toc,
+body.plain .chamber, body.plain .veil, body.plain .apparitions, body.plain .reveal-box, body.plain .dial-slot, body.plain .gauge, body.plain .spectrum, body.plain .toc,
 body.plain .findings, body.plain .reveals .icon, body.plain .scan-stage, body.plain .evidence, body.plain .omens { display: none !important; }
 body.plain .scan-grid { grid-template-columns: 1fr; min-height: auto; }
 body.plain .offering { margin-top: 20px; }
