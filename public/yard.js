@@ -131,7 +131,24 @@ window.Yard = (() => {
         <div class="tomb-carve v${v}"><i>R.I.P.</i><b>${esc(CARVE[kind] || 'Gone')}</b></div>
       </div>`;
   const rise = (item) => { if (item.el) { item.el.classList.remove('waiting'); item.el.classList.add('risen', 'landed'); } };
-  const point = (fx) => { S.face = fx >= S.fx ? 1 : -1; setPose('point', 1700); };
+  // Wisp's reaction to every ghost, whether or not it still has room for a stone:
+  // he jumps, his lantern flares, and he calls out what he found.
+  const CALL = {
+    dead: ['🪦', 'Dead link!'], possessed: ['😈', 'Hijacked!'], 'past-event': ['🎈', 'Expired!'], 'stale-year': ['⏳', 'Old year!'],
+    nameless: ['❓', 'No title!'], chain: ['🧭', 'Lost link!'], speechless: ['🤐', 'No description!'],
+  };
+  const bubble = document.createElement('div');
+  bubble.className = 'patrol-bubble';
+  patrol.appendChild(bubble);
+  let bubbleTimer = null;
+  const react = (kind, n = 1) => {
+    const [emo, word] = CALL[kind] || ['👻', 'Ghost!'];
+    bubble.innerHTML = `<span>${emo}</span>${n > 1 ? `${n}× ` : ''}${word}`;
+    bubble.classList.remove('on'); void bubble.offsetWidth; bubble.classList.add('on');
+    clearTimeout(bubbleTimer); bubbleTimer = setTimeout(() => bubble.classList.remove('on'), 1700);
+    setPose('gasp', 1400);
+    S.hop = 1; S.flare = 1;
+  };
 
   // Every ghost gets its moment in the big tombstone, in order. When they pour in, ghosts of the same kind
   // that are waiting together share one stone ("4 links that lead nowhere"), so the line never backs up.
@@ -176,7 +193,7 @@ window.Yard = (() => {
     }
     big.remove();
     group.forEach(rise);
-    if (target) point(target.fx);
+    react(kind, n);
   };
   // The reveal waits for the line to finish; if it's still long, the rest rise at once.
   const drain = async (max = 5000) => {
@@ -187,7 +204,7 @@ window.Yard = (() => {
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // ---------- Patrol ----------
-  const S = { fx: 0.14, tfx: 0.14, x: 0, vx: 0, face: 1, running: false };
+  const S = { fx: 0.14, tfx: 0.14, x: 0, vx: 0, face: 1, running: false, hop: 0, flare: 0 };
   const GLOW = { search: [0.16, 0.37], point: [0.19, 0.56], gasp: [0.18, 0.57], happy: [0.37, 0.5] };
   const progress = (f) => {
     S.tfx = 0.14 + Math.max(0, Math.min(1, f)) * 0.72;
@@ -230,15 +247,18 @@ window.Yard = (() => {
     const size = Math.max(140, Math.min(290, W * 0.17));
     const t = now / 1000;
     const bob = calm ? 0 : Math.sin(t * 1.7) * 10 + Math.sin(t * 0.6) * 5;
-    const x = S.fx * W - size / 2, y = H * 0.72 - size + bob;
+    S.hop = Math.max(0, S.hop - dt * 1.6); S.flare = Math.max(0, S.flare - dt * 1.1);
+    const hop = calm ? 0 : Math.sin(S.hop * Math.PI) * 46 * S.hop;
+    const x = S.fx * W - size / 2, y = H * 0.72 - size + bob - hop;
     const tilt = calm ? 0 : Math.max(-10, Math.min(10, S.vx * 120)) + Math.sin(t * 0.8) * 2;
     patrol.style.width = patrol.style.height = size + 'px';
     patrol.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${tilt.toFixed(2)}deg)`;
-    patrol.querySelector('.patrol-pose').style.transform = `scaleX(${pose === 'point' ? S.face : 1})`;
+
     const glow = patrol.querySelector('.patrol-glow');
-    const gp = GLOW[pose] || GLOW.search; const flip = pose === 'point' && S.face < 0;
+    const gp = GLOW[pose] || GLOW.search; const flip = false;
     glow.style.left = ((flip ? 1 - gp[0] : gp[0]) * 100) + '%'; glow.style.top = (gp[1] * 100) + '%';
     glow.style.opacity = calm ? 0.9 : (0.85 + Math.sin(t * 11) * 0.06 + Math.random() * 0.06).toFixed(3);
+    glow.style.transform = `translate(-50%, -50%) scale(${(1 + S.flare * 0.6).toFixed(3)})`;
   };
   requestAnimationFrame(tick);
   // ---------- The reveal: "N ghosts found", and every one of them flies at you ----------

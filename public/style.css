@@ -1010,3 +1010,11 @@ body.on-report .gauge-svg { overflow: visible; }
 body.calm .verdict-emoji, body.calm .g-emoji.now { animation: none; }
 body.calm .claws g { animation: none; clip-path: none; }
 @media (max-width: 860px) { .claws { left: auto; right: 0; width: 160px; height: 120px; } }
+.patrol-bubble { position: absolute; left: 50%; bottom: 96%; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px 9px 12px; border-radius: 999px; white-space: nowrap;
+  font: 650 16px var(--sans); color: #2b1705; background: linear-gradient(180deg, #fff3d6, #ffd893); box-shadow: 0 10px 30px -6px rgba(0,0,0,.6), 0 0 30px -6px rgba(255,196,107,.8);
+  transform: translateX(-50%) scale(.4) translateY(20px); opacity: 0; pointer-events: none; }
+.patrol-bubble span { font-size: 20px; }
+.patrol-bubble::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -7px; border: 7px solid transparent; border-top-color: #ffd893; }
+.patrol-bubble.on { animation: bubble 1.7s cubic-bezier(.3,1.6,.5,1) forwards; }
+@keyframes bubble { 0% { opacity: 0; transform: translateX(-50%) scale(.4) translateY(20px); } 18% { opacity: 1; transform: translateX(-50%) scale(1); } 82% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.9) translateY(-10px); } }
+body.calm .patrol-bubble.on { animation: none; opacity: 1; transform: translateX(-50%); }
