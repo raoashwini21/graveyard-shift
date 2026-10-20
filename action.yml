@@ -1,0 +1,41 @@
+name: Graveyard Shift
+description: Weekly haunt for your website. Finds dead links, possessed links, stale years and expired events, and opens an issue only when new ghosts move in.
+author: Ashwini Rao
+branding:
+  icon: moon
+  color: purple
+
+inputs:
+  site:
+    description: The site to scan, like example.com
+    required: true
+  max-pages:
+    description: How many pages to scan
+    required: false
+    default: '100'
+  internal-only:
+    description: Set to true to skip links to other sites
+    required: false
+    default: 'false'
+  token:
+    description: Token used to open and update the issue
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Install
+      shell: bash
+      run: npm ci --omit=dev --no-audit --no-fund --prefix "$GITHUB_ACTION_PATH"
+    - name: Haunt
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/bin/haunt.js"
+      env:
+        HAUNT_SITE: ${{ inputs.site }}
+        HAUNT_MAX_PAGES: ${{ inputs.max-pages }}
+        HAUNT_INTERNAL_ONLY: ${{ inputs.internal-only }}
+        GITHUB_TOKEN: ${{ inputs.token }}

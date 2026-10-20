@@ -1,0 +1,22 @@
+# The weekly haunt. Copy this file into any repo's .github/workflows/ folder,
+# set the site below (or a repo variable called HAUNT_SITE), and you're haunted.
+# To stop it, delete this file.
+
+name: Weekly haunt
+
+on:
+  schedule:
+    - cron: '17 3 * * 1' # Mondays, 03:17 UTC (8:47 AM IST)
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+permissions:
+  issues: write
+
+jobs:
+  haunt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: raoashwini21/graveyard-shift@main
+        with:
+          site: ${{ vars.HAUNT_SITE }}
+          max-pages: '100'
