@@ -3,94 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Graveyard Shift</title>
-<meta name="description" content="Find the ghosts on your website: dead links, possessed links, stale years and expired events.">
+<title>Graveyard Shift: a séance for your website</title>
+<meta name="description" content="Hold a séance for your website. The spirits reveal dead links, possessed links, stale years and parties that already ended.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪦</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕯️</text></svg>">
 </head>
 <body>
-<div class="fog" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="room" aria-hidden="true"></div>
 
-<div class="wrap">
-  <header class="bar">
-    <a class="brand" href="/">Graveyard Shift</a>
-    <div class="toggles">
-      <button class="toggle" id="sound" aria-pressed="false">Sound off</button>
-      <button class="toggle" id="boring" aria-pressed="false">Boring mode</button>
+<header class="bar">
+  <button class="toggle" id="sound" aria-pressed="false">Sound off</button>
+  <button class="toggle" id="boring" aria-pressed="false">Boring mode</button>
+</header>
+
+<main class="wrap">
+  <section class="seance" id="seance">
+    <p class="invite" id="invite">Ask the spirits what haunts your website.</p>
+
+    <div class="table">
+      <div class="candle left" aria-hidden="true"><i class="flame"></i></div>
+      <div class="board" id="board" role="img" aria-label="A spirit board">
+        <div class="board-name">Graveyard Shift</div>
+        <div class="letters" id="letters"></div>
+        <svg class="planchette" id="planchette" viewBox="0 0 120 140" aria-hidden="true">
+          <defs>
+            <radialGradient id="lens" cx="50%" cy="45%" r="55%">
+              <stop offset="0" stop-color="#fff8e6" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#fff8e6" stop-opacity=".05"/>
+            </radialGradient>
+          </defs>
+          <path d="M60 4 C 98 4, 116 52, 112 86 C 108 118, 84 136, 60 136 C 36 136, 12 118, 8 86 C 4 52, 22 4, 60 4 Z" fill="#4a2a17" stroke="#d9a441" stroke-width="3"/>
+          <path d="M60 14 C 90 14, 104 54, 100 84 C 97 110, 80 126, 60 126 C 40 126, 23 110, 20 84 C 16 54, 30 14, 60 14 Z" fill="none" stroke="#d9a441" stroke-width="1" opacity=".5"/>
+          <circle cx="60" cy="46" r="20" fill="url(#lens)" stroke="#d9a441" stroke-width="3"/>
+          <circle cx="60" cy="46" r="24" fill="none" stroke="#d9a441" stroke-width="1" opacity=".6"/>
+          <path d="M44 92 h32 M50 102 h20" stroke="#d9a441" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+          <circle cx="60" cy="82" r="3" fill="#d9a441"/>
+        </svg>
+      </div>
+      <div class="candle right" aria-hidden="true"><i class="flame"></i></div>
     </div>
-  </header>
 
-  <main>
-    <section class="gate" id="gate">
-      <h1>Your website is haunted.</h1>
-      <p>Paste a site and we'll walk every page with a lantern, looking for dead links, links that now lead somewhere else, stale years and events that already ended.</p>
-      <form class="visit" id="visit">
-        <label class="sr-only" for="url">Website address</label>
-        <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" required>
-        <button class="lantern-btn" type="submit">Light the lantern</button>
-      </form>
+    <form class="ask" id="ask">
+      <label for="url">Whose house shall we visit tonight?</label>
+      <div class="ask-row">
+        <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" spellcheck="false" required>
+        <button class="begin" type="submit">Begin the séance</button>
+      </div>
       <div class="options">
-        <label>Pages to walk
+        <label>Rooms to walk
           <select id="maxPages">
-            <option value="50">50</option>
-            <option value="100" selected>100</option>
-            <option value="200">200</option>
+            <option value="50">50 pages</option>
+            <option value="100" selected>100 pages</option>
+            <option value="200">200 pages</option>
           </select>
         </label>
-        <label><input type="checkbox" id="external" checked> Check links to other sites</label>
+        <label><input type="checkbox" id="external" checked> Visit links to other sites</label>
       </div>
       <p class="error" id="error" role="alert"></p>
-    </section>
+    </form>
 
-    <section class="yard" id="yard" aria-live="polite">
-      <div class="yard-head">
-        <h2 id="yardTitle"></h2>
-        <p class="meta" id="yardMeta"></p>
-        <div class="boss" id="boss">
-          <div class="boss-top">
-            <span class="boss-name" id="bossName"></span>
-            <span class="boss-num" id="bossNum"></span>
-          </div>
-          <div class="boss-track" role="progressbar" aria-label="Haunting score" id="bossTrack"><div class="boss-fill" id="bossFill"></div></div>
-        </div>
-        <div class="yard-actions">
-          <button class="ghost-btn" id="again">Scan another site</button>
-          <button class="ghost-btn" id="share">Download share card</button>
-          <button class="ghost-btn" id="exportMd">Download report</button>
-          <button class="ghost-btn" id="exportCsv">Download CSV</button>
+    <div class="trance" id="trance" aria-live="polite">
+      <p class="trance-line" id="tranceLine">The spirits are gathering…</p>
+      <p class="trance-path" id="trancePath"></p>
+      <p class="trance-count" id="tranceCount"></p>
+      <button class="link-btn" id="cancel" type="button">End the séance</button>
+    </div>
+
+    <p class="spoken" id="spoken" aria-live="assertive"></p>
+  </section>
+
+  <section class="reading" id="reading" aria-labelledby="readingTitle">
+    <div class="reading-head">
+      <div>
+        <h1 id="readingTitle"></h1>
+        <p class="verdict" id="verdict"></p>
+        <div class="actions">
+          <button class="act" id="again" type="button">New séance</button>
+          <button class="act" id="share" type="button">Download share card</button>
+          <button class="act" id="exportMd" type="button">Download report</button>
+          <button class="act" id="exportCsv" type="button">Download CSV</button>
         </div>
       </div>
-      <div class="filters" id="filters" role="group" aria-label="Show ghosts of one kind"></div>
-      <div class="stones" id="stones"></div>
-      <div class="plain" id="plain"></div>
-      <div class="peace" id="peace">
-        <h2>Your site is at peace.</h2>
-        <p id="peaceText">Every ghost has been banished. Scan again after you fix things to make sure they stay gone.</p>
-      </div>
-      <details class="locked" id="locked"></details>
-      <div class="limits" id="limits"></div>
-    </section>
-  </main>
-</div>
+      <figure class="unrest" aria-labelledby="unrestCap">
+        <div class="tall-candle" id="tallCandle"><i class="flame"></i><span class="wax" id="wax"></span></div>
+        <figcaption id="unrestCap"></figcaption>
+      </figure>
+    </div>
 
-<div class="walk" id="walk" aria-live="polite">
-  <div class="halls" id="halls" aria-hidden="true"></div>
-  <div class="darkness" aria-hidden="true"></div>
-  <div class="glow" aria-hidden="true"></div>
-  <div class="walk-status">
-    <div id="walkText">Lighting the lantern…</div>
-    <button class="walk-cancel" id="cancel">Stop and go back</button>
-  </div>
-</div>
+    <p class="hint" id="hint">Turn a card to see what it holds.</p>
+    <div class="spread" id="spread"></div>
+    <section class="card-reading" id="cardReading" aria-live="polite"></section>
 
-<div class="reveal" id="reveal" aria-live="assertive">
-  <div class="count" id="revealCount"></div>
-  <div class="sub" id="revealSub"></div>
-</div>
+    <div class="plain" id="plain"></div>
+    <div class="limits" id="limits"></div>
+  </section>
+</main>
 
+<div class="dark" id="dark" aria-hidden="true"></div>
 <script src="app.js"></script>
 </body>
 </html>
