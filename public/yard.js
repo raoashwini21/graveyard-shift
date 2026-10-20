@@ -109,8 +109,7 @@ window.Yard = (() => {
     const t = { el, row: spot.row, fx: spot.fx, kind };
     tombs.push(t);
     positionTomb(t);
-    setPose('point', 1500);
-    S.face = spot.fx >= S.fx ? 1 : -1;
+    const point = () => { S.face = spot.fx >= S.fx ? 1 : -1; setPose('point', 1700); };
     if (tombs.length > MAX_TOMBS) {
       const old = tombs.shift();
       old.el.classList.add('sinking');
@@ -118,7 +117,7 @@ window.Yard = (() => {
     }
     // The first ghost of each moment gets the full-screen tombstone; rapid ones just rise in place.
     const now = Date.now();
-    if (still() || now - lastBig < 2600) { requestAnimationFrame(() => el.classList.add('risen')); return; }
+    if (still() || now - lastBig < 2600) { requestAnimationFrame(() => el.classList.add('risen')); point(); return; }
     lastBig = now;
     el.classList.add('waiting');
     const big = document.createElement('div');
@@ -137,6 +136,7 @@ window.Yard = (() => {
         { duration: 700, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards' }).finished.then(() => {
         el.classList.remove('waiting'); el.classList.add('risen', 'landed');
         big.remove();
+        point(); // he turns and points at the stone the moment it lands
       }, () => big.remove());
     }, 1500);
   };

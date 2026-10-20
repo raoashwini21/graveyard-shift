@@ -983,3 +983,5 @@ body.plain .kc-desc, body.plain .kinds-head p, body.plain .watch-copy > p, body.
 @media (max-width: 600px) { .kinds-section { padding-top: 56px; } .watch { padding: 22px; } }
 
 body.on-report .sub .tag.back { color: #ffb4a0; }
+.tomb-carve b { white-space: nowrap; }
+.k-nameless .tomb-carve b { font-size: calc(var(--ts, 120px) * .082); }
