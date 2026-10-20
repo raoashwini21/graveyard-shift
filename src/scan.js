@@ -58,18 +58,27 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   const emit = (e) => { try { onEvent(e); } catch {} };
   const ignored = (url) => opts.ignore.some((p) => url.includes(p));
 
-  const start = normalizeStart(startInput);
+  let start = normalizeStart(startInput);
   emit({ type: 'phase', phase: 'knocking', url: start });
 
   // Land on the real home page first (http→https, apex→www, etc.)
-  const home = await f.follow(start, { readBody: true });
+  let home = await f.follow(start, { readBody: true });
+  // No scheme given and https failed? Some sites only speak http.
+  const typedScheme = /^https?:\/\//i.test(String(startInput).trim());
+  if (!typedScheme && (home.error || !home.status) && home.error !== 'blocked') {
+    const plain = start.replace(/^https:/, 'http:');
+    const retry = await f.follow(plain, { readBody: true });
+    if (!retry.error && retry.status && retry.status < 400) { start = plain; home = retry; }
+  }
   if (home.error || !home.status || home.status >= 400) {
     const why = {
       ENOTFOUND: 'no website exists at that address',
       ECONNREFUSED: 'the site refused the connection',
       timeout: 'the site took too long to answer',
       blocked: 'private network addresses are not allowed here',
-    }[home.error] || (home.error ? home.error : `it answered with status ${home.status}`);
+      ECONNRESET: 'the connection was cut off',
+    }[home.error] || (/SSL|CERT|TLS/i.test(home.error || '') ? 'its secure connection (https) failed' : null)
+      || (home.error ? home.error : `it answered with status ${home.status}`);
     throw new Error(`Couldn't open ${start}: ${why}.`);
   }
   const homeUrl = home.finalUrl;

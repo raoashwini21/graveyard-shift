@@ -143,3 +143,10 @@ test('a link that now lands on a different company is possessed', () => {
   const outreach = { status: 200, hops: [{ url: 'https://www.outreach.io/', status: 301 }], finalUrl: 'https://www.outreach.ai/' };
   assert.equal(classifyLink(outreach, 'https://www.outreach.io/', [], false), null);
 });
+
+test('a site given without a scheme falls back to http when https fails', async () => {
+  const bare = site.url.replace('http://', '');
+  const r = await scan(bare, { now: '2026-10-20T12:00:00Z', delayMs: 0, timeoutMs: 4000, maxPages: 2, external: false });
+  assert.match(r.site, /^http:\/\//);
+  assert.ok(r.pagesScanned >= 1);
+});

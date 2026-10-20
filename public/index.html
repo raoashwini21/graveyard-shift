@@ -3,88 +3,132 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Graveyard Shift: a séance for your website</title>
-<meta name="description" content="Hold a séance for your website. The spirits reveal dead links, possessed links, stale years and parties that already ended.">
+<title>Graveyard Shift — a séance for your website</title>
+<meta name="description" content="Graveyard Shift walks every page of your website and reveals dead links, possessed redirects, stale years and expired events. Free and open source.">
+<link rel="preload" href="fonts/cormorant-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
-<link rel="preload" href="fonts/fell-sc.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕯️</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='22' fill='none' stroke='%23b8925a' stroke-width='5'/><circle cx='32' cy='32' r='6' fill='%23b8925a'/></svg>">
 </head>
 <body>
 <div class="grain" aria-hidden="true"></div>
 
-<header class="bar">
-  <button class="toggle" id="sound" aria-pressed="false">Sound off</button>
-  <button class="toggle" id="boring" aria-pressed="false">Boring mode</button>
+<header class="top">
+  <a class="mark" href="/" id="home">Graveyard Shift</a>
+  <nav class="top-nav">
+    <button class="nav-btn" id="plainBtn" aria-pressed="false">Plain report</button>
+    <button class="nav-btn" id="soundBtn" aria-pressed="false">Sound off</button>
+  </nav>
 </header>
 
-<main class="wrap">
-  <section class="seance" id="seance">
-    <p class="invite" id="invite">Ask the spirits what haunts your website.</p>
-
-    <div class="table">
-      <div class="candle" aria-hidden="true"></div>
-      <div class="board" id="board" role="img" aria-label="A spirit board"></div>
-      <div class="candle tall" aria-hidden="true"></div>
+<main>
+  <!-- Landing -->
+  <section class="view landing" id="landing">
+    <div class="hero">
+      <div class="hero-copy">
+        <h1>Every website<br>is haunted.</h1>
+        <p class="lede">Graveyard Shift walks every page of your site and every link on it, then tells you what has quietly died: dead links, links that now lead somewhere else, copyright years stuck in the past and invitations to events that already ended.</p>
+        <form class="ask" id="ask" novalidate>
+          <label class="sr-only" for="url">Website address</label>
+          <div class="field">
+            <span class="prefix" aria-hidden="true">https://</span>
+            <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" spellcheck="false" required>
+            <button class="btn primary" type="submit">Begin the séance</button>
+          </div>
+          <div class="opts">
+            <label class="opt">Depth
+              <select id="maxPages">
+                <option value="50">50 pages</option>
+                <option value="100" selected>100 pages</option>
+                <option value="200">200 pages</option>
+              </select>
+            </label>
+            <label class="opt check"><input type="checkbox" id="external" checked> Include links to other sites</label>
+          </div>
+          <p class="error" id="error" role="alert"></p>
+        </form>
+      </div>
+      <div class="oracle-slot" id="heroSlot"></div>
     </div>
 
-    <form class="ask" id="ask">
-      <label for="url">Whose house shall we visit tonight?</label>
-      <div class="ask-row">
-        <input id="url" name="url" placeholder="yoursite.com" autocomplete="url" inputmode="url" spellcheck="false" required>
-        <button class="begin" type="submit">Begin the séance</button>
-      </div>
-      <div class="options">
-        <label>Rooms to walk
-          <select id="maxPages">
-            <option value="50">50</option>
-            <option value="100" selected>100</option>
-            <option value="200">200</option>
-          </select>
-        </label>
-        <label><input type="checkbox" id="external" checked> Knock on other sites' doors too</label>
-      </div>
-      <p class="error" id="error" role="alert"></p>
-    </form>
+    <section class="index-section" aria-labelledby="revealsTitle">
+      <h2 id="revealsTitle">What the séance reveals</h2>
+      <ol class="reveals" id="reveals"></ol>
+    </section>
 
-    <div class="trance" id="trance" aria-live="polite">
-      <p class="trance-line" id="tranceLine">The spirits are gathering…</p>
-      <p class="trance-path" id="trancePath"></p>
-      <p class="trance-count" id="tranceCount"></p>
-      <button class="quiet-btn" id="cancel" type="button">End the séance</button>
-    </div>
+    <section class="watch-section" aria-labelledby="watchTitle">
+      <div>
+        <h2 id="watchTitle">The weekly watch</h2>
+        <p>Add one file to any GitHub repository and Graveyard Shift visits your site every Monday. It keeps a single issue up to date and mentions you only when new ghosts move in. Delete the file and the haunting stops.</p>
+      </div>
+      <pre class="code"><code>- uses: raoashwini21/graveyard-shift@main
+  with:
+    site: yoursite.com</code></pre>
+    </section>
 
-    <p class="spoken" id="spoken" aria-live="assertive"></p>
+    <footer class="foot">
+      <span>Free, open source, no account, no keys.</span>
+      <a href="https://github.com/raoashwini21/graveyard-shift" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+    </footer>
   </section>
 
-  <section class="reading" id="reading" aria-labelledby="readingTitle">
-    <div class="reading-head">
-      <div>
-        <h1 id="readingTitle"></h1>
-        <p class="verdict" id="verdict"></p>
-        <div class="actions">
-          <button class="quiet-btn" id="again" type="button">New séance</button>
-          <button class="quiet-btn" id="share" type="button">Download share card</button>
-          <button class="quiet-btn" id="exportMd" type="button">Report</button>
-          <button class="quiet-btn" id="exportCsv" type="button">CSV</button>
-        </div>
+  <!-- Scan -->
+  <section class="view scan" id="scan" aria-live="polite">
+    <div class="scan-grid">
+      <div class="scan-copy">
+        <p class="kicker">Séance in progress</p>
+        <h1 id="scanHost"></h1>
+        <p class="phase" id="scanPhase">The spirits are gathering.</p>
+        <dl class="counters">
+          <div><dt>Pages walked</dt><dd id="cPages">0</dd></div>
+          <div><dt>Links checked</dt><dd id="cLinks">0</dd></div>
+        </dl>
+        <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+        <ol class="log" id="log"></ol>
+        <button class="btn ghost" id="cancel" type="button">End the séance</button>
       </div>
-      <figure class="unrest" aria-labelledby="unrestCap">
-        <div class="meter" id="meter"></div>
-        <figcaption id="unrestCap"></figcaption>
-      </figure>
+      <div class="oracle-slot" id="scanSlot"></div>
+    </div>
+  </section>
+
+  <!-- Report -->
+  <section class="view report" id="report">
+    <header class="report-head">
+      <div>
+        <p class="kicker">A reading for</p>
+        <h1 id="rHost"></h1>
+        <p class="meta" id="rMeta"></p>
+      </div>
+      <div class="report-actions">
+        <button class="btn ghost" id="share" type="button">Share card</button>
+        <button class="btn ghost" id="exportMd" type="button">Report</button>
+        <button class="btn ghost" id="exportCsv" type="button">CSV</button>
+        <button class="btn primary" id="again" type="button">New séance</button>
+      </div>
+    </header>
+
+    <div class="verdict" id="verdict">
+      <div class="verdict-main">
+        <p class="verdict-word" id="vWord"></p>
+        <p class="verdict-line" id="vLine"></p>
+      </div>
+      <div class="verdict-score">
+        <span class="score-num" id="vScore"></span>
+        <span class="score-label">Unrest</span>
+      </div>
+      <div class="spectrum" id="spectrum" aria-hidden="true"></div>
     </div>
 
-    <p class="hint" id="hint">Turn a card to see what it holds.</p>
-    <div class="spread" id="spread"></div>
-    <section class="card-reading" id="cardReading" aria-live="polite"></section>
-
-    <div class="plain" id="plain"></div>
+    <div class="report-body">
+      <nav class="toc" id="toc" aria-label="Findings by kind"></nav>
+      <div class="findings" id="findings"></div>
+    </div>
+    <div class="plain-table" id="plainTable"></div>
     <div class="limits" id="limits"></div>
   </section>
 </main>
 
-<div class="dark" id="dark" aria-hidden="true"></div>
-<script src="art.js"></script>
+<div class="oracle-home" id="oracleHome" hidden></div>
 <script src="app.js"></script>
 </body>
 </html>
