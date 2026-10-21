@@ -12,7 +12,7 @@
 
   // ---------- Calm mode: no motion surprises anywhere ----------
   const calmBtn = $('calmBtn');
-  const setCalm = (on) => { document.body.classList.toggle('calm', on); calmBtn.setAttribute('aria-pressed', String(on)); calmBtn.textContent = on ? 'Calm mode on' : 'Calm mode'; store.set('gs:calm', on); };
+  const setCalm = (on) => { document.body.classList.toggle('calm', on); calmBtn.setAttribute('aria-pressed', String(on)); calmBtn.textContent = on ? '🕯️ Calm mode on' : '👻 Calm mode off'; store.set('gs:calm', on); };
   calmBtn.onclick = () => setCalm(!document.body.classList.contains('calm'));
   setCalm(store.get('gs:calm', false));
   const still = () => mq.matches || document.body.classList.contains('calm');
