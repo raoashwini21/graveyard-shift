@@ -133,3 +133,13 @@ test('the weekly card: creative title, three-part summary, and only when somethi
   assert.equal(worthSending(quiet), false);
   assert.equal(worthSending(d), true);
 });
+
+test('money pages are real money pages, never blog posts with "buy" in the title', async () => {
+  const { isImportant } = await import('../src/digest.js');
+  const on = (p) => ghost('x', { foundOn: ['https://ex.com' + p] });
+  for (const p of ['/pricing', '/signup', '/book-a-demo', '/contact-sales', '/en/pricing', '/checkout/step-2']) assert.ok(isImportant(on(p)), p);
+  for (const p of ['/blogs/buy-linkedin-accounts', '/blog/pricing-strategies', '/startups', '/about', '/blogs/how-to-book-a-demo']) assert.ok(!isImportant(on(p)), p);
+  // a dead link on a blog post that points to your own pricing page does matter
+  assert.ok(!isImportant(ghost('y', { url: 'https://other.com/pricing', foundOn: ['https://ex.com/blog/x'] })), 'someone else\'s pricing page is not yours');
+  assert.ok(isImportant(ghost('z', { url: 'https://ex.com/pricing', foundOn: ['https://ex.com/blog/x'] })));
+});

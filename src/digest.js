@@ -6,21 +6,25 @@
 //   it is carried forward quietly instead.
 // - Fix This First: the most important ghost, weighted towards money pages (pricing, signup, contact, demo).
 
-const IMPORTANT = /(pricing|plans?|sign-?up|signin|register|get-?started|trial|demo|book|contact|checkout|buy|subscribe|start)([/?#.-]|$)/i;
+// A money page is one whose own address starts with these words: /pricing, /signup, /book-a-demo, /contact-sales.
+// Blog posts never count, even if their title contains "buy" or "pricing".
+const MONEY = /^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(pricing|plans?|sign-?up|register|get-?started|start-trial|free-trial|trial|demo|book-a-demo|book-demo|contact|contact-sales|talk-to-sales|checkout|buy|subscribe|upgrade)(?:[/?#]|-|$)/i;
+const BLOG = /^\/(?:[a-z]{2}\/)?(blogs?|news|articles?|posts?|resources|guides?|learn)\//i;
+const isMoney = (u) => { const p = pathOf(u); return !BLOG.test(p) && MONEY.test(p); };
 const WEIGHT = { dead: 100, possessed: 70, 'past-event': 60, nameless: 50, 'stale-year': 30, chain: 25, speechless: 15 };
 
 export const pathOf = (u) => { try { return new URL(u).pathname; } catch { return u || ''; } };
 
 export function priority(g) {
   let p = WEIGHT[g.type] || 0;
-  const where = [g.url, ...(g.foundOn || [])].map(pathOf).join(' ');
-  if (IMPORTANT.test(where)) p += 80;
+  if (isImportant(g)) p += 80;
   if (pathOf(g.foundOn?.[0]) === '/') p += 20; // on the home page, everyone sees it
   p += Math.min(g.foundOn?.length || 1, 10) * 3; // on many pages
   if (g.confidence === 'maybe') p -= 300; // never lead with something uncertain if anything certain exists
   return p;
 }
-export const isImportant = (g) => IMPORTANT.test([g.url, ...(g.foundOn || [])].map(pathOf).join(' '));
+// The ghost sits on a money page, or breaks a link that points to one of your money pages.
+export const isImportant = (g) => (g.foundOn || []).some(isMoney) || (g.url && isMoney(g.url) && /^https?:/.test(g.url) && (g.foundOn || []).some((p) => { try { return new URL(p).host === new URL(g.url).host; } catch { return false; } }));
 
 // The small record of a ghost kept between weeks.
 export const remember = (g, firstSeen) => ({
