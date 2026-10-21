@@ -1076,3 +1076,10 @@ body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); 
 /* Centre the Wake the watchman button */
 .watch-how { text-align: center; }
 .watch-how-body { text-align: left; }
+/* "Found on N pages" sits inline with the status, no stray triangle */
+.sub details { display: inline-block; }
+.sub summary { list-style: none; }
+.sub summary::marker { content: ''; }
+.sub details[open] { display: inline; }
+.sub details[open] ul { display: block; }
+div.sub { margin: 6px 0 0; }

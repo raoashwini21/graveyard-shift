@@ -460,7 +460,7 @@
       <span class="rec-stamp" aria-hidden="true">${rested ? 'Laid to rest' : state.returned.has(g.id) ? 'Came back' : esc(stampText(g))}</span>
       <div class="rec-body">
         ${target}<span class="rest-note">Laid to rest</span>
-        <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag review">· needs review</span>' : ''}${state.returned.has(g.id) ? ' <span class="tag back">· you marked this fixed, but it\'s still there</span>' : ''}</p>
+        <div class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag review">· needs review</span>' : ''}${state.returned.has(g.id) ? ' <span class="tag back">· you marked this fixed, but it\'s still there</span>' : ''}</div>
         ${evidenceHtml(g)}
         ${g.type === 'locked' ? '' : `<p class="fix"><b>The cure</b>${esc(g.fix)}</p>`}
       </div>
