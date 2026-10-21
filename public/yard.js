@@ -158,9 +158,12 @@ window.Yard = (() => {
     const head = group[0], n = group.length, kind = head.kind;
     const big = document.createElement('div');
     big.className = `tomb-big k-${kind}`;
-    const places = group.map((g) => where(g.path));
+    const LINKY = { dead: 1, possessed: 1, chain: 1 };
+    const linkTo = (path) => { const p = (path || '').replace(/^https?:\/\//, '').replace(/^www\./, ''); return p.startsWith('/') ? (p.length > 34 ? p.slice(0, 33) + '…' : p) : p.split('/')[0]; };
+    const places = LINKY[kind] ? group.map((g) => linkTo(g.path)) : group.map((g) => where(g.path));
     const line = n === 1 ? (SAY[kind] || kind) : `${n} ${SAYN[kind] || kind}`;
-    const sub = n === 1 ? places[0] : `${places.slice(0, 2).join(', ')}${n > 2 ? ` and ${n - 2} more` : ''}`;
+    const list = n === 1 ? places[0] : `${places.slice(0, 2).join(', ')}${n > 2 ? ` and ${n - 2} more` : ''}`;
+    const sub = LINKY[kind] ? `to ${list}` : list;
     big.innerHTML = `<div class="tomb tomb-hero risen">${stoneHtml(kind, head.v || 1)}</div>
       <p class="tomb-say"><b>${esc(line)}</b><span>${esc(sub)}</span></p>`;
     document.body.appendChild(big);

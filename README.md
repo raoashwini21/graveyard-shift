@@ -43,7 +43,7 @@ Every finding comes with the page it's on and the fix. Link problems also show t
 
 ![A case file with evidence and fixes](.github/readme/case.jpg)
 
-Fixed something? **Banish** it. The ghost dissolves, the record stays, and the next scan checks it really stayed gone. You can also download a **share card** for LinkedIn or X, a **Markdown report** and a **CSV**.
+Fixed something? **Banish** it. The ghost dissolves, the record stays, and the next scan checks it really stayed gone. You can also download a **share card** for LinkedIn or X, the **full report** as Markdown and a **CSV**.
 
 ![The share card](.github/readme/share.jpg)
 
@@ -74,7 +74,7 @@ npm run scan -- yoursite.com --max-pages 300
 npm run scan -- yoursite.com --format md --out report.md
 ```
 
-Options: `--max-pages`, `--max-links`, `--internal-only`, `--show-locked`, `--format text|md|json|csv`, `--out`, `--state` (report only what's new since a previous JSON result), `--fail-on-ghosts` (for CI), `--ignore`. Run `npm run scan -- --help` for details.
+Options: `--max-pages`, `--max-links`, `--internal-only`, `--show-locked`, `--format text|md|json|csv`, `--out`, `--state prev.json` (compare with a previous JSON result: shows what's new and what's gone, and with `--fail-on-ghosts` fails only on new ghosts), `--fail-on-ghosts` (for CI), `--ignore`. Run `npm run scan -- --help` for details.
 
 ## Hire the night watchman
 

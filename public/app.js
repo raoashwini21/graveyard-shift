@@ -54,7 +54,8 @@
   };
   const ORDER = ['dead', 'possessed', 'past-event', 'stale-year', 'nameless', 'chain', 'speechless', 'locked'];
   const WEIGHT = { dead: 10, possessed: 6, chain: 4, nameless: 6, speechless: 3, 'stale-year': 5, 'past-event': 7, locked: 0 };
-  const ghostScore = (g) => Math.round((WEIGHT[g.type] || 0) * Math.min(1 + (g.foundOn.length - 1) * 0.25, 3));
+  // Unrounded per ghost; totals are rounded once, exactly like the server, so the page and the downloads agree.
+  const ghostScore = (g) => (WEIGHT[g.type] || 0) * Math.min(1 + (g.foundOn.length - 1) * 0.25, 3);
   const rankOf = (s) => (s === 0 ? 'At peace' : s <= 20 ? 'Restless' : s <= 50 ? 'Haunted' : s <= 100 ? 'Infested' : 'Cursed');
   const count = (n, t) => `${fmt(n)} ${n === 1 ? KINDS[t].one : KINDS[t].many}`;
   const WHISPERS = {
@@ -241,7 +242,8 @@
   const statusClass = (s) => (s === 'room' ? 's-room' : typeof s === 'number' ? (s >= 400 ? 's-bad' : s >= 300 ? 's-move' : 's-ok') : s === 'loop' || s === 'broken' ? 's-bad' : 's-move');
   const log = (status, text) => {
     const li = document.createElement('li');
-    const label = status === 'room' ? 'room' : status === null || status === undefined ? '·' : String(status).slice(0, 6);
+    const NICE = { ENOTFOUND: 'no dns', timeout: 'slow', ECONNREFUSED: 'refused', ECONNRESET: 'cut off', broken: 'broken' };
+    const label = status === 'room' ? 'room' : status === null || status === undefined ? '·' : NICE[status] || (/SSL|CERT|TLS/i.test(status) ? 'tls' : String(status).slice(0, 7));
     li.innerHTML = `<span class="${statusClass(status)}">${esc(label)}</span><span>${esc(text)}</span>`;
     const list = $('log');
     list.prepend(li);
@@ -355,7 +357,7 @@
     state.goneForGood = [...before].filter((id) => !ids.has(id)).length;
     state.banished = new Set();
     store.set('gs:banished:' + result.site, []);
-    state.initialScore = result.ghosts.reduce((n, g) => n + ghostScore(g), 0);
+    state.initialScore = Math.round(result.ghosts.reduce((n, g) => n + ghostScore(g), 0));
     const n = result.ghostCount;
     if (isPlain() || reduceMotion) { renderReport(); return; }
 
@@ -373,7 +375,7 @@
     sfx.knock(); await wait(1100);
     setPhase(n ? `${fmt(n)} ghost${n === 1 ? '' : 's'} in this graveyard.` : 'Not a single ghost. Wisp is delighted.');
     await wait(1600);
-    const s0 = result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0);
+    const s0 = Math.round(result.ghosts.reduce((acc, g) => acc + (state.banished.has(g.id) ? 0 : ghostScore(g)), 0));
     const leftNow = result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id)).length;
     if (window.Yard && document.body.classList.contains('on-yard')) {
       await Yard.drain(skip ? 0 : 6000);
@@ -399,7 +401,7 @@
   const all = (t) => state.result.ghosts.filter((g) => g.type === t);
   const alive = (t) => all(t).filter((g) => !state.banished.has(g.id));
   const aliveAll = () => state.result.ghosts.filter((g) => g.type !== 'locked' && !state.banished.has(g.id));
-  const scoreNow = () => aliveAll().reduce((n, g) => n + ghostScore(g), 0);
+  const scoreNow = () => Math.round(aliveAll().reduce((n, g) => n + ghostScore(g), 0));
   const present = () => ORDER.filter((t) => all(t).length);
 
   const statusTag = (g) => {
@@ -569,7 +571,7 @@
     const nowRank = left ? rankOf(s) : 'At peace';
     document.querySelectorAll('#gTicks .g-emoji').forEach((e) => e.classList.toggle('now', e.dataset.rank === nowRank));
     $('spectrum').innerHTML = ORDER.filter((t) => t !== 'locked').map((t) => {
-      const w = alive(t).reduce((n, g) => n + ghostScore(g), 0);
+      const w = Math.round(alive(t).reduce((n, g) => n + ghostScore(g), 0));
       return w ? `<span style="flex-grow:${w};background:${KINDS[t].color};color:${KINDS[t].color}" title="${esc(KINDS[t].name)}"></span>` : '';
     }).join('') || '<span style="flex-grow:1;background:var(--sage);color:var(--sage);opacity:.6"></span>';
     const activeId = document.querySelector('.toc a.active')?.getAttribute('href');

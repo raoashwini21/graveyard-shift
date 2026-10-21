@@ -17,7 +17,8 @@ Usage: graveyard-shift <url> [options]
   --show-locked       List every link we couldn't verify, not just a summary
   --format <f>        text (default), md, json or csv
   --out <file>        Write the report to a file
-  --state <file>      Compare with a previous JSON result, report only what's new
+  --state <file>      Compare with a previous JSON result: say what's new and what's gone
+                      (with --fail-on-ghosts, fail only on new ghosts)
   --fail-on-ghosts    Exit with code 1 if any ghost is found (for CI)
   --ignore <text>     Skip URLs containing this text (repeatable)
   --config <file>     Read options from a JSON file (default: graveyard.config.json if present)
@@ -86,11 +87,13 @@ try {
   else if (format === 'md') output = toMarkdown(result, { diff });
   else if (format === 'csv') output = toCsv(result);
   else output = toText(result, { color: process.stdout.isTTY && !args.out, showLocked: args.showLocked });
+  if (diff && format === 'text') output = `Since last scan: ${diff.added.length} new, ${diff.banished.length} gone.\n` + (diff.added.length ? diff.added.map((g) => `  new: ${g.name} · ${g.url || g.quote || ''}`).join('\n') + '\n' : '') + '\n' + output;
 
   if (args.out) writeFileSync(args.out, output + '\n');
   else console.log(output);
 
-  if (args.failOnGhosts && result.ghostCount > 0) process.exit(1);
+  // With --state, only ghosts that are new since last time fail the build.
+  if (args.failOnGhosts && (diff ? diff.added.length : result.ghostCount) > 0) process.exit(1);
 } catch (err) {
   if (isTty) process.stderr.write('\r\x1b[2K');
   console.error(`👻 ${err.message}`);

@@ -201,3 +201,22 @@ test('the copyright quote is just the notice, not the footer links after it', ()
   assert.equal(copyrightNotice('© 2022 Spooky Co. Privacy Terms'), '© 2022 Spooky Co. Privacy Terms');
   assert.equal(copyrightNotice('Made with love. © 2020 Acme Inc. Built in Pune.', 16), '© 2020 Acme Inc. Built in Pune.');
 });
+
+test('a missing domain is only dead if this computer can look up addresses at all', async () => {
+  const { doubtDns, probeDns } = await import('../src/scan.js');
+  const dead = { type: 'dead', data: { reason: 'dns' }, detail: { error: 'ENOTFOUND' } };
+  assert.equal(doubtDns(dead, { error: 'ENOTFOUND' }, true).type, 'dead');
+  const offline = doubtDns(dead, { error: 'ENOTFOUND' }, false);
+  assert.equal(offline.type, 'locked');
+  assert.match(offline.detail.reason, /couldn't look up/);
+  // other dead links are never touched
+  assert.equal(doubtDns({ type: 'dead', detail: { status: 404 } }, { status: 404 }, false).type, 'dead');
+  assert.equal(await probeDns(async () => ({})), true);
+  assert.equal(await probeDns(async (h) => { if (h === 'google.com') throw new Error('ENOTFOUND'); return {}; }), false);
+});
+
+test('the live page count matches the report', async () => {
+  let last = 0;
+  const r = await scan(site.url, { now: '2026-10-20T12:00:00Z', delayMs: 0, timeoutMs: 4000 }, (e) => { if (e.type === 'page') last = e.pagesScanned; });
+  assert.equal(last, r.pagesScanned);
+});

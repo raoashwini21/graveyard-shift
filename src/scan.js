@@ -2,6 +2,7 @@
 // run the page checks, check every link, and turn it all into ghosts.
 
 import { createHash } from 'node:crypto';
+import { lookup } from 'node:dns/promises';
 import { createFetcher } from './fetcher.js';
 import { parseRobots } from './robots.js';
 import { analyzePage } from './checks.js';
@@ -157,12 +158,14 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   };
 
   const crawlPage = async (url) => {
+    try { await readPage(url); } finally { emit({ type: 'page', url, pagesScanned: pages.length }); }
+  };
+  const readPage = async (url) => {
     let r = linkResults.get(url);
     if (!r || r.body === undefined) {
       r = await f.follow(url, { readBody: true });
       linkResults.set(url, r);
     }
-    emit({ type: 'page', url, pagesScanned: pages.length + 1 });
     if (r.error || r.status >= 400) {
       // A page the sitemap promises but can't deliver is a ghost too.
       if (sitemapSet.has(url)) {
@@ -215,6 +218,8 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   emit({ type: 'phase', phase: 'knocking on every door', linksTotal: toCheck.length });
 
   let checked = 0;
+  let dnsOk = null;
+  const dnsWorks = () => (dnsOk ??= (opts.dnsProbe || probeDns)());
   await pool(toCheck, opts.concurrency, async (url) => {
     const foundOn = [...linksFound.get(url)];
     // A link like https://n/ is a typo, not a site. Don't bother knocking.
@@ -229,6 +234,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     checked++;
     emit({ type: 'link', url, status: r.loop ? 'loop' : (r.status || r.error || null), hops: r.hops ? r.hops.length : 0, linksChecked: checked, linksTotal: toCheck.length });
     let g = classifyLink(r, url, opts.botShy, sameSite(url));
+    if (g && g.type === 'dead' && r.error === 'ENOTFOUND') g = doubtDns(g, r, await dnsWorks());
     // Before calling anything dead by its status code, ask once more the way a browser would.
     // If a person would get the page, it isn't dead; if the site now refuses us, we can't tell.
     if (g && g.type === 'dead' && r.status) {
@@ -279,6 +285,18 @@ const hostMatches = (url, domains) => {
     return domains.some((d) => h === d || h.endsWith('.' + d));
   } catch { return false; }
 };
+
+// "No such domain" only means dead if this computer can look up web addresses at all.
+// On a captive Wi-Fi or a locked-down network every outside link fails that way; those are "couldn't check".
+const DNS_PROBES = ['example.com', 'wikipedia.org', 'google.com', 'cloudflare.com'];
+export async function probeDns(look = lookup) {
+  const one = (h) => Promise.race([look(h).then(() => true, () => false), new Promise((r) => setTimeout(() => r(false), 4000))]);
+  return (await Promise.all(DNS_PROBES.map(one))).every(Boolean);
+}
+export function doubtDns(g, r, dnsOk) {
+  if (!g || g.type !== 'dead' || r.error !== 'ENOTFOUND' || dnsOk) return g;
+  return { type: 'locked', detail: { ...g.detail, reason: "couldn't look up web addresses from this computer" } };
+}
 
 export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy, internal = true) {
   if (['blocked', 'bad-url', 'unsupported'].includes(r.error)) return null;
