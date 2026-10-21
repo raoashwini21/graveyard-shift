@@ -4,6 +4,7 @@ import { startFixtureSite } from './fixture-site.js';
 import { scan, classifyLink, isMalformed, baseDomain, meaningfulHops } from '../src/scan.js';
 import { toText } from '../src/report.js';
 import { parseRobots } from '../src/robots.js';
+import { copyrightNotice } from '../src/checks.js';
 
 let site;
 let result;
@@ -193,4 +194,10 @@ test('the scan reports presences as ghosts are found, so the screen can react li
   assert.ok(presences.length >= 8);
   assert.ok(presences.some((e) => e.kind === 'dead'));
   assert.ok(events.some((e) => e.type === 'link' && e.status === 404));
+});
+
+test('the copyright quote is just the notice, not the footer links after it', () => {
+  assert.equal(copyrightNotice('© 2021 Moonbrew Coffee Co. All rights reserved. CareersGift cards LinkedIn'), '© 2021 Moonbrew Coffee Co. All rights reserved.');
+  assert.equal(copyrightNotice('© 2022 Spooky Co. Privacy Terms'), '© 2022 Spooky Co. Privacy Terms');
+  assert.equal(copyrightNotice('Made with love. © 2020 Acme Inc. Built in Pune.', 16), '© 2020 Acme Inc. Built in Pune.');
 });

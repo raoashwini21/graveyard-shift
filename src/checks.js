@@ -105,11 +105,13 @@ export function analyzePage(html, pageUrl, { now = new Date(), quietPaths = [] }
       if (y >= year) continue;
       const inFooter = footerText.includes(line.slice(0, 60));
       if (!inFooter && quiet) continue;
+      // Quote just the copyright notice, not the footer links that follow it on the same line.
+      const notice = copyrightNotice(line, m.index);
       findings.push({
         type: 'stale-year',
         confidence: inFooter ? 'confirmed' : 'maybe',
-        key: `stale-year|${line}`,
-        quote: clip(line),
+        key: `stale-year|${notice}`,
+        quote: clip(notice),
         data: { year: y },
       });
     }
@@ -145,4 +147,14 @@ export function analyzePage(html, pageUrl, { now = new Date(), quietPaths = [] }
   }
 
   return { title, description, noindex, links: [...links], linkMeta, findings };
+}
+
+// "© 2021 Moonbrew Coffee Co. All rights reserved. Careers Gift cards" -> "© 2021 Moonbrew Coffee Co. All rights reserved."
+export function copyrightNotice(line, at = 0) {
+  const rest = line.slice(Math.max(0, at - 0)).trim();
+  const reserved = rest.match(/^.*?rights reserved\.?/i);
+  if (reserved) return reserved[0];
+  const sentence = rest.match(/^.{20,}?[.!](?=\s|$)/);
+  if (sentence && sentence[0].length <= 120) return sentence[0];
+  return rest.length > 90 ? rest.slice(0, 90).replace(/\s+\S*$/, '') + '…' : rest;
 }
