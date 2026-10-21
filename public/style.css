@@ -1048,3 +1048,22 @@ body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); 
   background: rgba(255,255,255,.08); color: var(--cream); font: 600 13px var(--sans); transition: background .2s; }
 .copy-btn:hover { background: rgba(255,196,107,.2); }
 .copy-btn.done { background: #9fd0b4; color: #102018; border-color: transparent; }
+
+/* The watchman's setup, folded away until asked for */
+.watch { grid-template-columns: 170px minmax(0, 1fr); }
+.watch-how { grid-column: 1 / -1; border-top: 1px solid rgba(255,255,255,.08); padding-top: 18px; }
+.watch-how summary { list-style: none; display: inline-flex; align-items: center; gap: 14px; padding: 10px 20px 10px 10px; border-radius: 999px; cursor: pointer;
+  background: rgba(255,196,107,.1); border: 1px solid rgba(255,196,107,.35); color: var(--cream); transition: background .25s, border-color .25s; }
+.watch-how summary::-webkit-details-marker { display: none; }
+.watch-how summary:hover { background: rgba(255,196,107,.18); border-color: rgba(255,196,107,.6); }
+.watch-how summary img { width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 0 12px rgba(255,196,107,.45)); transition: transform .4s cubic-bezier(.3,1.6,.5,1); }
+.watch-how summary:hover img, .watch-how[open] summary img { transform: translateY(-4px) rotate(-6deg); }
+.watch-how summary span { display: grid; }
+.watch-how summary b { font: 650 17px var(--sans); }
+.watch-how summary i { font: italic 500 14px var(--story); color: rgba(246,239,225,.65); }
+.watch-how summary svg { width: 20px; height: 20px; color: var(--amber); transition: transform .3s; }
+.watch-how[open] summary svg { transform: rotate(180deg); }
+.watch-how-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 22px; animation: how-in .45s var(--ease); }
+@keyframes how-in { from { opacity: 0; transform: translateY(-8px); } }
+.watch-how .watch-steps { margin-top: 0; }
+@media (max-width: 1000px) { .watch { grid-template-columns: 1fr; } .watch-how-body { grid-template-columns: 1fr; } }

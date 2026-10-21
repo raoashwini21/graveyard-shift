@@ -108,13 +108,18 @@
         <p class="sec-kicker">Free weekly monitoring</p>
         <h2 id="watchTitle">Hire the night watchman</h2>
         <p>Wisp can check one website for you every week, on GitHub, for free. He only speaks up when something new breaks.</p>
+      </div>
+      <details class="watch-how" id="watchHow">
+        <summary><img src="art/ghost-idle.webp" alt="" aria-hidden="true"><span><b>Wake the watchman</b><i>Set it up in about 2 minutes</i></span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 8 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+        <div class="watch-how-body">
+          <div>
         <ol class="watch-steps">
           <li><b>Make the file.</b> In any GitHub repository (a new empty one is fine), click <b>Add file → Create new file</b> and name it <code>.github/workflows/haunt.yml</code>. Typing the slashes creates the folders.</li>
           <li><b>Paste this in</b>, change <code>yoursite.com</code> to your website, and click <b>Commit changes</b>.</li>
           <li><b>See it now:</b> open the <b>Actions</b> tab, pick <b>Weekly haunt</b> and click <b>Run workflow</b>. In a few minutes an issue appears with everything Wisp found, and GitHub emails you.</li>
           <li><b>That's it.</b> Every Monday he walks your site again. New ghost? He adds it to the issue and GitHub emails you. Nothing new? Silence. Delete the file to stop. (If your repo sits untouched for 60 days, GitHub pauses weekly jobs and emails you first; one click turns it back on.)</li>
         </ol>
-      </div>
+          </div>
       <div class="code-wrap"><button class="copy-btn" id="copyYaml" type="button">Copy</button>
       <pre class="code" aria-label="Workflow file"><code><span class="c-c"># .github/workflows/haunt.yml</span>
 <span class="c-k">name:</span> Weekly haunt
@@ -131,6 +136,8 @@
       - <span class="c-k">uses:</span> raoashwini21/graveyard-shift@main
         <span class="c-k">with:</span>
           <span class="c-k">site:</span> <span class="c-v">yoursite.com</span></code></pre></div>
+        </div>
+      </details>
     </section>
 
     <footer class="foot">
