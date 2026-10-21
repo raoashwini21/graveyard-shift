@@ -1067,3 +1067,12 @@ body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); 
 @keyframes how-in { from { opacity: 0; transform: translateY(-8px); } }
 .watch-how .watch-steps { margin-top: 0; }
 @media (max-width: 1000px) { .watch { grid-template-columns: 1fr; } .watch-how-body { grid-template-columns: 1fr; } }
+/* Ghost cards: centre the last, shorter row */
+.kinds { display: flex; flex-wrap: wrap; justify-content: center; }
+.kinds .kind-card { flex: 0 1 calc((100% - 54px) / 4); min-width: 250px; }
+@media (max-width: 1100px) { .kinds .kind-card { flex-basis: calc((100% - 36px) / 3); } }
+@media (max-width: 820px) { .kinds .kind-card { flex-basis: calc((100% - 18px) / 2); } }
+@media (max-width: 560px) { .kinds .kind-card { flex-basis: 100%; } }
+/* Centre the Wake the watchman button */
+.watch-how { text-align: center; }
+.watch-how-body { text-align: left; }
