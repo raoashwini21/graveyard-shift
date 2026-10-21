@@ -1042,3 +1042,9 @@ body.on-report .verdict-word { font-family: 'Creepster', 'Fraunces', serif; font
 body.on-report .verdict-word[data-rank="At peace"] { color: #9fd0b4; text-shadow: 0 0 40px rgba(120,210,170,.35); }
 @media (max-width: 760px) { .hero-title em { font-size: .84em; } }
 body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); color: #1f1d1a; text-shadow: none; }
+
+.code-wrap { position: relative; min-width: 0; }
+.copy-btn { position: absolute; top: 12px; right: 12px; z-index: 1; padding: 7px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18); cursor: pointer;
+  background: rgba(255,255,255,.08); color: var(--cream); font: 600 13px var(--sans); transition: background .2s; }
+.copy-btn:hover { background: rgba(255,196,107,.2); }
+.copy-btn.done { background: #9fd0b4; color: #102018; border-color: transparent; }

@@ -154,4 +154,15 @@
     S.tlook = Math.max(0, S.tlook - dt * 0.8);
   };
   requestAnimationFrame(tick);
+
+  // Copy the workflow file for the night watchman
+  const copy = $('copyYaml');
+  if (copy) copy.onclick = async () => {
+    const text = copy.parentNode.querySelector('code').innerText;
+    try { await navigator.clipboard.writeText(text); } catch {
+      const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove();
+    }
+    copy.textContent = 'Copied'; copy.classList.add('done');
+    setTimeout(() => { copy.textContent = 'Copy'; copy.classList.remove('done'); }, 1800);
+  };
 })();
