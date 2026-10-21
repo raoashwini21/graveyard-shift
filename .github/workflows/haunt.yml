@@ -20,7 +20,3 @@ jobs:
         with:
           site: ${{ vars.HAUNT_SITE }}
           max-pages: '300'
-          # Optional: the designed weekly email. Add these three as repository secrets to turn it on.
-          email-to: ${{ secrets.HAUNT_EMAIL_TO }}
-          smtp-user: ${{ secrets.HAUNT_SMTP_USER }}
-          smtp-password: ${{ secrets.HAUNT_SMTP_PASSWORD }}

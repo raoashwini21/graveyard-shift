@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { haunt, decodeState, LABEL } from '../src/haunt.js';
 import { digest, worthSending, priority } from '../src/digest.js';
-import { subject, html, text } from '../src/email.js';
+import { digestMarkdown, cardTitle } from '../src/haunt.js';
 
 // An in-memory GitHub that records what would be emailed.
 function fakeGitHub() {
@@ -40,7 +40,7 @@ test('the weekly haunt only emails you when something changes', async () => {
   let out = await haunt(scanOf([ghost('a'), ghost('b')]), gh);
   assert.equal(out.action, 'opened');
   assert.equal(gh.emails.length, 1);
-  assert.match(gh.issues[0].title, /2 ghosts haunt ex\.com/);
+  assert.match(gh.issues[0].title, /Wisp found 2 ghosts haunting ex\.com/);
   assert.deepEqual(decodeState(gh.issues[0].body).ghosts.map((g) => g.id), ['a', 'b']);
   assert.ok(gh.issues[0].labels.includes(LABEL));
 
@@ -56,11 +56,11 @@ test('the weekly haunt only emails you when something changes', async () => {
   assert.equal(out.banished, 1);
   assert.equal(gh.emails.length, 2);
   const c = gh.issues[0].comments[0];
-  assert.match(c, /1 new ghost moved into ex\.com/);
+  assert.match(c, /A new ghost moved into ex\.com/);
   assert.match(c, /\/c/);
   assert.equal(c.includes('/a`'), false);
   assert.match(c, /Laid to rest/);
-  assert.match(gh.issues[0].title, /2 ghosts haunt ex\.com/);
+  assert.match(gh.issues[0].title, /A new ghost moved into ex\.com/, 'the title (email subject) says what is new');
 
   // Locked doors never count as new ghosts
   out = await haunt(scanOf([ghost('a'), ghost('c'), ghost('z', { type: 'locked', name: 'Locked door' })]), gh);
@@ -98,10 +98,10 @@ test('the haunt @mentions you so GitHub actually emails you', async () => {
   await haunt(scanOf([ghost('a')]), gh, { mention: 'raoashwini21' });
   assert.match(gh.issues[0].body, /@raoashwini21/);
   await haunt(scanOf([ghost('a'), ghost('b')]), gh, { mention: 'raoashwini21' });
-  assert.match(gh.issues[0].comments[0], /^👻 @raoashwini21 /);
+  assert.match(gh.issues[0].comments[0], /@raoashwini21/);
   // other sites' links show the full address, your own pages just the path
   await haunt(scanOf([ghost('a'), ghost('b'), ghost('n', { url: 'https://n/' })]), gh, { mention: 'raoashwini21' });
-  assert.match(gh.issues[0].comments[1], /`https:\/\/n\/`/);
+  assert.match(gh.issues[0].comments[1], /<code>https:\/\/n\/<\/code>/);
   assert.match(gh.issues[0].body, /`\/a`/);
 });
 
@@ -122,15 +122,13 @@ test('fix this first leads with money pages and never with an uncertain finding'
   assert.ok(priority(pricing) > priority(blog));
 });
 
-test('the email: creative subject, three-part summary, and only when something new arrives', () => {
+test('the weekly card: creative title, three-part summary, and only when something new arrives', () => {
   const prev = digest(null, scanOf([ghost('a'), ghost('b')])).state;
   const d = digest(prev, scanOf([ghost('a'), ghost('c'), ghost('d', { confidence: 'maybe' })]));
-  assert.equal(subject(d), '2 new ghosts moved into ex.com 👻');
+  assert.equal(cardTitle(d), '👻 2 new ghosts moved into ex.com');
   assert.equal(d.added.length, 2); assert.equal(d.still.length, 1); assert.equal(d.resolved.length, 1);
-  const h = html(d, { reportUrl: 'https://github.com/o/r/issues/1', unsubscribeUrl: 'https://github.com/o/r/actions' });
-  for (const s of ['New arrivals', 'Still haunting', 'Laid to rest', 'Fix this first', 'View the full investigation', 'Turn off weekly checks', 'Needs review']) assert.ok(h.includes(s), s);
-  assert.ok(!text(d).includes('<'), 'plain text part has no markup');
-  // nothing new: no email by default
+  const md = digestMarkdown(d, 'me', { reportUrl: 'https://github.com/o/r/issues/1', turnOffUrl: 'https://github.com/o/r/actions' });
+  for (const s of ['NEW ARRIVALS', 'STILL HAUNTING', 'LAID TO REST', 'Fix this first', 'View the full investigation', 'disable the workflow', 'needs review', 'spirit-dead.png', '@me']) assert.ok(md.includes(s), s);
   const quiet = digest(d.state, scanOf([ghost('a'), ghost('c'), ghost('d', { confidence: 'maybe' })]));
   assert.equal(worthSending(quiet), false);
   assert.equal(worthSending(d), true);
