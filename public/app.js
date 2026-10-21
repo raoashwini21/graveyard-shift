@@ -216,8 +216,7 @@
     <span class="spirit sp-${t}" aria-hidden="true"><img src="art/spirit-${t}.webp" alt="" loading="lazy"></span>
     <span class="kc-label">${cap(KINDS[t].many)}</span>
     <span class="kc-name">${KINDS[t].name}</span>
-    <span class="kc-desc">${KINDS[t].meaning}</span>
-    <span class="kc-epitaph">${KINDS[t].epitaph}</span></li>`).join('');
+    <span class="kc-desc">${KINDS[t].meaning}</span></li>`).join('');
   show('landing');
 
   // ---------- The séance (scan) ----------
