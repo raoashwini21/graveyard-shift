@@ -722,7 +722,7 @@
   $('share').onclick = async () => {
     const r = state.result;
     const img = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
-    try { await Promise.all(['400 90px Nosifer', '620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px "Bricolage Grotesque"', '400 18px "Bricolage Grotesque"'].map((f) => document.fonts.load(f))); } catch {}
+    try { await Promise.all(['620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px "Bricolage Grotesque"', '400 18px "Bricolage Grotesque"'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630, S = 2;
     const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
     const x = c.getContext('2d'); x.scale(S, S);
@@ -751,8 +751,8 @@
     while (x.measureText(host).width > 560 && fs > 32) { fs -= 2; x.font = `620 ${fs}px Fraunces, serif`; }
     x.fillText(host, 70, 158);
     // the headline: N ghosts found
-    x.font = '400 92px Nosifer, Fraunces, serif'; x.fillStyle = '#e0242c';
-    x.shadowColor = 'rgba(220,20,30,.55)'; x.shadowBlur = 40;
+    x.font = 'italic 560 120px Fraunces, serif'; x.fillStyle = '#ffc46b';
+    x.shadowColor = 'rgba(255,170,80,.45)'; x.shadowBlur = 40;
     const num = left ? fmt(left) : 'No';
     x.fillText(num, 66, 290); const nw = x.measureText(num).width; x.shadowBlur = 0;
     x.font = '620 64px Fraunces, serif'; x.fillStyle = '#f6efe1';
