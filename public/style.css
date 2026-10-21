@@ -1030,3 +1030,16 @@ body.on-report .sub .tag.review { color: var(--amber); }
 @media (max-width: 700px) { .hud-progress { padding-top: 46px; } }
 .hud-progress .scan-bar { order: 0; }
 .hud-progress .reading-now { order: 1; }
+
+/* ================= Blood: Nosifer for the words that should drip ================= */
+@font-face { font-family: 'Nosifer'; font-weight: 400; src: url(fonts/nosifer.woff2) format('woff2'); font-display: swap; }
+:root { --blood: 'Nosifer', 'Fraunces', serif; --blood-red: #e0242c; }
+.hero-title em { display: inline-block; margin-top: .06em; font-family: var(--blood); font-style: normal; font-weight: 400; font-size: .74em; letter-spacing: .01em;
+  font-variation-settings: normal; color: var(--blood-red); text-shadow: 0 0 34px rgba(220,20,30,.55), 0 4px 0 #4a0007, 0 10px 30px rgba(0,0,0,.6); }
+body.on-report .verdict-word { font-family: var(--blood); font-style: normal; font-weight: 400; font-size: clamp(2.4rem, 5.4vw, 4.6rem); letter-spacing: .01em;
+  font-variation-settings: normal; color: var(--blood-red); text-shadow: 0 0 40px rgba(220,20,30,.5), 0 4px 0 #4a0007; line-height: 1.15; }
+body.on-report .verdict-word[data-rank="At peace"] { color: #9fd0b4; text-shadow: 0 0 40px rgba(120,210,170,.35); }
+.verdict-word[data-rank="Cursed"] { color: var(--blood-red); }
+.yr-title em { font-family: var(--blood); font-style: normal; font-size: .82em; color: var(--blood-red); text-shadow: 0 0 60px rgba(220,20,30,.6), 0 4px 0 #4a0007; }
+@media (max-width: 760px) { .hero-title em { font-size: .7em; } }
+body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); color: #1f1d1a; text-shadow: none; }

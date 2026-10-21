@@ -722,7 +722,7 @@
   $('share').onclick = async () => {
     const r = state.result;
     const img = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
-    try { await Promise.all(['620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px "Bricolage Grotesque"', '400 18px "Bricolage Grotesque"'].map((f) => document.fonts.load(f))); } catch {}
+    try { await Promise.all(['400 90px Nosifer', '620 90px Fraunces', 'italic 560 90px Fraunces', '600 20px "Bricolage Grotesque"', '400 18px "Bricolage Grotesque"'].map((f) => document.fonts.load(f))); } catch {}
     const W = 1200, H = 630, S = 2;
     const c = document.createElement('canvas'); c.width = W * S; c.height = H * S;
     const x = c.getContext('2d'); x.scale(S, S);
@@ -751,8 +751,8 @@
     while (x.measureText(host).width > 560 && fs > 32) { fs -= 2; x.font = `620 ${fs}px Fraunces, serif`; }
     x.fillText(host, 70, 158);
     // the headline: N ghosts found
-    x.font = 'italic 560 120px Fraunces, serif'; x.fillStyle = '#ffc46b';
-    x.shadowColor = 'rgba(255,170,80,.45)'; x.shadowBlur = 40;
+    x.font = '400 92px Nosifer, Fraunces, serif'; x.fillStyle = '#e0242c';
+    x.shadowColor = 'rgba(220,20,30,.55)'; x.shadowBlur = 40;
     const num = left ? fmt(left) : 'No';
     x.fillText(num, 66, 290); const nw = x.measureText(num).width; x.shadowBlur = 0;
     x.font = '620 64px Fraunces, serif'; x.fillStyle = '#f6efe1';
@@ -761,13 +761,13 @@
     const verdict = (left ? rankOf(s) : 'At peace').toUpperCase();
     x.font = '650 14px "Bricolage Grotesque", sans-serif'; const vw = x.measureText(verdict).width + 36;
     x.fillStyle = left ? 'rgba(255,120,90,.14)' : 'rgba(156,199,169,.16)'; x.strokeStyle = left ? 'rgba(255,140,110,.5)' : 'rgba(156,199,169,.55)'; x.lineWidth = 1.2;
-    x.beginPath(); x.roundRect(70, 318, vw, 34, 17); x.fill(); x.stroke();
-    x.fillStyle = left ? '#ffb4a0' : '#a6d1b3'; x.fillText(verdict, 88, 340);
+    x.beginPath(); x.roundRect(70, 336, vw, 34, 17); x.fill(); x.stroke();
+    x.fillStyle = left ? '#ffb4a0' : '#a6d1b3'; x.fillText(verdict, 88, 358);
     x.fillStyle = 'rgba(246,239,225,.7)'; x.font = '400 17px "Bricolage Grotesque", sans-serif';
-    x.fillText(`${fmt(r.pagesScanned)} pages and ${fmt(r.linksChecked)} links checked`, 70 + vw + 18, 341);
+    x.fillText(`${fmt(r.pagesScanned)} pages and ${fmt(r.linksChecked)} links checked`, 70 + vw + 18, 359);
     // the ghosts, with their spirits
     kinds.forEach((t, i) => {
-      const y = 392 + i * 66;
+      const y = 404 + i * 64;
       x.fillStyle = 'rgba(255,255,255,.06)'; x.beginPath(); x.roundRect(70, y, 470, 54, 27); x.fill();
       if (sp[i]) x.drawImage(sp[i], 76, y - 6, 62, 62);
       x.fillStyle = '#f6efe1'; x.font = '650 24px Fraunces, serif'; x.fillText(fmt(alive(t).length), 150, y + 36);
