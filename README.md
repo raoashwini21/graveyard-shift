@@ -25,7 +25,7 @@ Every website collects ghosts. Each one costs you clicks, trust or search rankin
 | <img src="public/email/spirit-chain.png" width="48"> | **Redirect chains** | Links that bounce through several redirects before arriving. Slower for readers, weaker for search. |
 | <img src="public/email/spirit-speechless.png" width="48"> | **Pages without a description** | Search engines will write one for you, and you won't like it. |
 
-Every finding comes with the page it's on, the evidence (the link text, what the server answered) and the fix.
+Every finding comes with the page it's on and the fix. Link problems also show the evidence: the link text and what the server answered.
 
 ## How it looks
 
@@ -53,7 +53,7 @@ There's sound (switch it off in the header) and a **Calm mode** that turns off t
 
 ## Run it
 
-You need [Node.js](https://nodejs.org) 20 or newer. Works on Mac, Windows and Linux.
+You need [Node.js](https://nodejs.org) 20 or newer. Runs on Mac, Windows and Linux.
 
 ```bash
 git clone https://github.com/raoashwini21/graveyard-shift.git
@@ -108,7 +108,7 @@ The card shows what's new, what's still haunting, what was laid to rest, and the
 
 Optional settings under `with:`: `max-pages` (default 100), `internal-only: 'true'` to skip links to other sites, and `mention` to choose who gets @mentioned (defaults to the repo owner, `none` to turn it off).
 
-To stop, delete the file or disable the workflow in the Actions tab. If a repository has no activity for 60 days, GitHub pauses scheduled workflows and emails you first; one click in the Actions tab turns it back on. Public repositories run Actions for free; private ones use a few of the 2,000 free minutes each month.
+To stop, delete the file or disable the workflow in the Actions tab. In a public repository with no activity for 60 days, GitHub pauses scheduled workflows; one click in the Actions tab turns it back on. Public repositories run Actions for free; private ones use a few of the 2,000 free minutes each month.
 
 ## How it stays accurate
 
@@ -119,7 +119,7 @@ A link checker is only useful if you can trust it, so Graveyard Shift would rath
 - **Server errors** (500, 502) are reported but labelled **needs review**, because they're often temporary. Busy servers (503 and Cloudflare's 52x errors) are locked doors.
 - **Hijacked links** ignore normal moves like http to https, adding www, short links and login pages, and a company keeping its name on a new domain.
 - **Expired events** are labelled needs review, since a date near a "Register" button isn't always an invitation.
-- **It's polite:** it respects robots.txt, waits between requests to the same site, and identifies itself as `GraveyardShift` in every request.
+- **It's polite:** it respects robots.txt, waits between requests to the same site, and identifies itself as `GraveyardShift` (except for the browser-style double-check of a link that looked dead).
 
 ## Tests
 
@@ -127,7 +127,7 @@ A link checker is only useful if you can trust it, so Graveyard Shift would rath
 npm test
 ```
 
-The tests run a small haunted website locally, with planted ghosts and look-alikes that must not be flagged: pages that show bots a 404 but people the real page, bot challenges, rate limits, busy servers, past events next to future ones, and more. They also cover the weekly watch end to end.
+The tests run a small haunted website locally, with planted ghosts and look-alikes that must not be flagged: pages that show bots a 404 but people the real page, bot challenges, rate limits, busy servers, past events next to future ones, and more. They also cover the weekly watch's logic, using a pretend GitHub.
 
 ## Credits
 
