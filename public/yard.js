@@ -131,21 +131,8 @@ window.Yard = (() => {
         <div class="tomb-carve v${v}"><i>R.I.P.</i><b>${esc(CARVE[kind] || 'Gone')}</b></div>
       </div>`;
   const rise = (item) => { if (item.el) { item.el.classList.remove('waiting'); item.el.classList.add('risen', 'landed'); } };
-  // Wisp's reaction to every ghost, whether or not it still has room for a stone:
-  // he jumps, his lantern flares, and he calls out what he found.
-  const CALL = {
-    dead: ['🪦', 'Dead link!'], possessed: ['😈', 'Hijacked!'], 'past-event': ['🎈', 'Expired!'], 'stale-year': ['⏳', 'Old year!'],
-    nameless: ['❓', 'No title!'], chain: ['🧭', 'Lost link!'], speechless: ['🤐', 'No description!'],
-  };
-  const bubble = document.createElement('div');
-  bubble.className = 'patrol-bubble';
-  patrol.appendChild(bubble);
-  let bubbleTimer = null;
-  const react = (kind, n = 1) => {
-    const [emo, word] = CALL[kind] || ['👻', 'Ghost!'];
-    bubble.innerHTML = `<span>${emo}</span>${n > 1 ? `${n}× ` : ''}${word}`;
-    bubble.classList.remove('on'); void bubble.offsetWidth; bubble.classList.add('on');
-    clearTimeout(bubbleTimer); bubbleTimer = setTimeout(() => bubble.classList.remove('on'), 1700);
+  // Wisp jumps and his lantern flares the moment a tombstone appears. No speech bubble: the stone says it.
+  const react = () => {
     setPose('gasp', 1400);
     S.hop = 1; S.flare = 1;
   };
@@ -178,6 +165,7 @@ window.Yard = (() => {
       <p class="tomb-say"><b>${esc(line)}</b><span>${esc(sub)}</span></p>`;
     document.body.appendChild(big);
     requestAnimationFrame(() => big.classList.add('on'));
+    react();
     const hold = behind > 4 ? 800 : behind > 1 ? 1100 : 1500;
     await sleep(hold);
     const target = group.find((g) => g.el);
@@ -193,7 +181,6 @@ window.Yard = (() => {
     }
     big.remove();
     group.forEach(rise);
-    react(kind, n);
   };
   // The reveal waits for the line to finish; if it's still long, the rest rise at once.
   const drain = async (max = 5000) => {
