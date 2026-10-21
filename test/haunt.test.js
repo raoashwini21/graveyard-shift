@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { haunt, decodeState, LABEL } from '../src/haunt.js';
+import { digest, worthSending, priority } from '../src/digest.js';
+import { subject, html, text } from '../src/email.js';
 
 // An in-memory GitHub that records what would be emailed.
 function fakeGitHub() {
@@ -27,7 +29,7 @@ const ghost = (id, extra = {}) => ({
   foundOn: ['https://ex.com/'], label: 'This page left no forwarding address.', fix: 'Remove the link.', quote: null, ...extra,
 });
 const scanOf = (ghosts) => ({
-  site: 'https://ex.com', scannedAt: '2026-10-20T00:00:00Z', pagesScanned: 5, linksChecked: 20,
+  site: 'https://ex.com', scannedAt: '2026-10-20T00:00:00Z', pagesScanned: 5, linksChecked: 20, pages: ['https://ex.com/', 'https://ex.com/pricing'],
   ghostCount: ghosts.filter((g) => g.type !== 'locked').length, score: 10, rank: 'Restless', limits: {}, ghosts,
 });
 
@@ -57,7 +59,7 @@ test('the weekly haunt only emails you when something changes', async () => {
   assert.match(c, /1 new ghost moved into ex\.com/);
   assert.match(c, /\/c/);
   assert.equal(c.includes('/a`'), false);
-  assert.match(c, /1 ghost was banished/);
+  assert.match(c, /Laid to rest/);
   assert.match(gh.issues[0].title, /2 ghosts haunt ex\.com/);
 
   // Locked doors never count as new ghosts
@@ -101,4 +103,35 @@ test('the haunt @mentions you so GitHub actually emails you', async () => {
   await haunt(scanOf([ghost('a'), ghost('b'), ghost('n', { url: 'https://n/' })]), gh, { mention: 'raoashwini21' });
   assert.match(gh.issues[0].comments[1], /`https:\/\/n\/`/);
   assert.match(gh.issues[0].body, /`\/a`/);
+});
+
+test('a ghost is only laid to rest if its page was checked again', () => {
+  const prev = digest(null, scanOf([ghost('a'), ghost('b', { foundOn: ['https://ex.com/deep'] })])).state;
+  // This week the scan never reached /deep, and neither ghost appears.
+  const d = digest(prev, scanOf([]));
+  assert.deepEqual(d.resolved.map((g) => g.id), ['a']);
+  assert.deepEqual(d.carried.map((g) => g.id), ['b'], 'unchecked ghost is carried, never claimed fixed');
+  assert.ok(d.state.ghosts.some((g) => g.id === 'b'), 'and remembered for next time');
+});
+
+test('fix this first leads with money pages and never with an uncertain finding', () => {
+  const blog = ghost('blog', { foundOn: ['https://ex.com/blog/x'] });
+  const pricing = ghost('pricing', { type: 'chain', foundOn: ['https://ex.com/pricing'] });
+  const unsure = ghost('unsure', { confidence: 'maybe', foundOn: ['https://ex.com/signup'] });
+  assert.equal(digest(null, scanOf([blog, pricing, unsure])).fixFirst.id, 'pricing');
+  assert.ok(priority(pricing) > priority(blog));
+});
+
+test('the email: creative subject, three-part summary, and only when something new arrives', () => {
+  const prev = digest(null, scanOf([ghost('a'), ghost('b')])).state;
+  const d = digest(prev, scanOf([ghost('a'), ghost('c'), ghost('d', { confidence: 'maybe' })]));
+  assert.equal(subject(d), '2 new ghosts moved into ex.com 👻');
+  assert.equal(d.added.length, 2); assert.equal(d.still.length, 1); assert.equal(d.resolved.length, 1);
+  const h = html(d, { reportUrl: 'https://github.com/o/r/issues/1', unsubscribeUrl: 'https://github.com/o/r/actions' });
+  for (const s of ['New arrivals', 'Still haunting', 'Laid to rest', 'Fix this first', 'View the full investigation', 'Turn off weekly checks', 'Needs review']) assert.ok(h.includes(s), s);
+  assert.ok(!text(d).includes('<'), 'plain text part has no markup');
+  // nothing new: no email by default
+  const quiet = digest(d.state, scanOf([ghost('a'), ghost('c'), ghost('d', { confidence: 'maybe' })]));
+  assert.equal(worthSending(quiet), false);
+  assert.equal(worthSending(d), true);
 });

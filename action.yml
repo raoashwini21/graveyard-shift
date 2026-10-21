@@ -21,6 +21,26 @@ inputs:
     description: GitHub username to @mention so they get an email (defaults to the repo owner; "none" to turn off)
     required: false
     default: ''
+  email-to:
+    description: Optional. Send the designed weekly email to this address (needs smtp-user and smtp-password).
+    required: false
+    default: ''
+  smtp-user:
+    description: Optional. The email account that sends it, e.g. you@gmail.com. Store it as a secret.
+    required: false
+    default: ''
+  smtp-password:
+    description: Optional. For Gmail, an app password from myaccount.google.com/apppasswords. Store it as a secret.
+    required: false
+    default: ''
+  smtp-host:
+    description: Optional. Defaults to Gmail (smtp.gmail.com).
+    required: false
+    default: 'smtp.gmail.com'
+  email-when:
+    description: When to email. "new" (default) only when new ghosts appear, "changes" also when some are laid to rest, "always" every week.
+    required: false
+    default: 'new'
   token:
     description: Token used to open and update the issue
     required: false
@@ -44,3 +64,8 @@ runs:
         HAUNT_INTERNAL_ONLY: ${{ inputs.internal-only }}
         HAUNT_MENTION: ${{ inputs.mention }}
         GITHUB_TOKEN: ${{ inputs.token }}
+        HAUNT_EMAIL_TO: ${{ inputs.email-to }}
+        HAUNT_SMTP_USER: ${{ inputs.smtp-user }}
+        HAUNT_SMTP_PASSWORD: ${{ inputs.smtp-password }}
+        HAUNT_SMTP_HOST: ${{ inputs.smtp-host }}
+        HAUNT_EMAIL_WHEN: ${{ inputs.email-when }}

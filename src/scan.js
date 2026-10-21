@@ -253,6 +253,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     startUrl: start,
     scannedAt: now.toISOString(),
     pagesScanned: pages.length,
+    pages: [...pages],
     linksChecked: checked,
     ghostCount: real.length,
     lockedCount: list.length - real.length,

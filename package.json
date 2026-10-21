@@ -11,7 +11,8 @@
   "author": "Ashwini Rao",
   "license": "MIT",
   "dependencies": {
-    "node-html-parser": "^6.1.13"
+    "node-html-parser": "^6.1.13",
+    "nodemailer": "^6.10.1"
   },
   "type": "module",
   "bin": {
