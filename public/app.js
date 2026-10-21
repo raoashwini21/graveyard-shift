@@ -122,7 +122,7 @@
   addEventListener('keydown', warm, { once: true });
   Haunt.onSound((name) => sfx[name] && sfx[name]());
   const soundBtn = $('soundBtn');
-  const paintSound = () => { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.textContent = soundOn ? '🔊 Sound on' : '🔇 Sound off'; };
+  const paintSound = () => { soundBtn.setAttribute('aria-pressed', String(soundOn)); soundBtn.innerHTML = soundOn ? '<span aria-hidden="true">🔊</span><span class="lbl"> Sound on</span>' : '<span aria-hidden="true">🔇</span><span class="lbl"> Sound off</span>'; soundBtn.setAttribute('aria-label', soundOn ? 'Sound on' : 'Sound off'); };
   soundBtn.onclick = () => {
     soundOn = !soundOn; store.set('gs:sound2', soundOn); paintSound();
     if (ctx() && master) master.gain.setTargetAtTime(soundOn ? 0.9 : 0, audio.currentTime, 0.05);

@@ -177,7 +177,8 @@ body.hush .embers { opacity: .2; transition: opacity 1.2s; }
 .top { position: relative; z-index: 10; display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 22px var(--pad); }
 .mark { font-family: var(--display); font-size: 28px; text-decoration: none; letter-spacing: .01em; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
 .top-nav { display: flex; gap: 22px; }
-.nav-btn { background: none; border: 0; padding: 0; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--bone-3); transition: color .3s; }
+.nav-btn { background: rgba(8,12,34,.55); border: 1px solid rgba(246,239,225,.22); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: 15px; font-weight: 700; color: var(--bone-3); transition: color .3s, background .3s, border-color .3s; backdrop-filter: blur(6px); white-space: nowrap; }
+.nav-btn:hover { border-color: rgba(255,196,107,.55); }
 .nav-btn:hover, .nav-btn[aria-pressed="true"] { color: var(--bone); }
 
 main { position: relative; z-index: 2; max-width: 1280px; margin: 0 auto; padding: 0 var(--pad) 90px; }
@@ -581,7 +582,7 @@ body.on-landing { background: var(--night); }
 body.on-landing .chamber, body.on-landing .ghost-layer, body.on-landing .ghost-tip { display: none; }
 body.on-landing .top { position: absolute; top: 0; left: 0; right: 0; z-index: 20; }
 body.on-landing .mark { font-family: var(--story); font-weight: 650; font-size: 22px; font-variation-settings: 'SOFT' 100, 'opsz' 48; letter-spacing: -.01em; text-shadow: none; }
-body.on-landing .nav-btn { color: rgba(246,239,225,.62); }
+body.on-landing .nav-btn { color: rgba(246,239,225,.92); }
 body.on-landing .nav-btn:hover, body.on-landing .nav-btn[aria-pressed="true"] { color: var(--cream); }
 body.on-landing main { padding-top: 0; }
 body.on-landing .view.landing.on { animation: none; }
@@ -688,7 +689,7 @@ body.on-yard .chamber, body.on-yard .ghost-layer, body.on-yard .ghost-tip { disp
 body.on-yard .top { position: absolute; top: 0; left: 0; right: 0; z-index: 20; }
 body.on-yard .view.scan { padding-top: 88px; }
 body.on-yard .mark { font-family: var(--story); font-weight: 650; font-size: 22px; font-variation-settings: 'SOFT' 100, 'opsz' 48; text-shadow: none; }
-body.on-yard .nav-btn { color: rgba(246,239,225,.62); }
+body.on-yard .nav-btn { color: rgba(246,239,225,.92); }
 .yard { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
 .yard-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; animation: drift-bg 60s ease-in-out infinite alternate; }
 .yard-shade { position: absolute; inset: 0; pointer-events: none; z-index: 8;
@@ -821,7 +822,7 @@ body.on-report .chamber, body.on-report .ghost-layer, body.on-report .ghost-tip 
 body.on-report::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(8,12,34,.72), rgba(8,12,34,.94) 60%), url(art/bg.webp) 70% 30% / cover no-repeat; }
 body.on-report .mark { font-family: var(--story); font-weight: 650; font-size: 22px; font-variation-settings: 'SOFT' 100, 'opsz' 48; text-shadow: none; }
-body.on-report .nav-btn { color: rgba(246,239,225,.62); }
+body.on-report .nav-btn { color: rgba(246,239,225,.92); }
 body.on-report .report-head::before, body.on-report .verdict::before { background: rgba(10,14,38,.55); backdrop-filter: blur(10px); border-radius: 0; }
 body.on-report .kicker { font: 600 12px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
 body.on-report .report-head h1 { font-family: var(--story); font-weight: 640; font-variation-settings: 'SOFT' 100, 'opsz' 144; letter-spacing: -.025em; color: var(--cream); text-shadow: none; }
@@ -1083,3 +1084,5 @@ body.plain .hero-title em, body.plain .verdict-word { font-family: var(--sans); 
 .sub details[open] { display: inline; }
 .sub details[open] ul { display: block; }
 div.sub { margin: 6px 0 0; }
+
+@media (max-width: 520px) { .nav-btn { font-size: 18px; padding: 5px 10px; line-height: 1.2; } .nav-btn .lbl { display: none; } }
