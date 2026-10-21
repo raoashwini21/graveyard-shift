@@ -1012,3 +1012,21 @@ body.calm .claws g { animation: none; clip-path: none; }
 @keyframes bubble { 0% { opacity: 0; transform: translateX(-50%) scale(.4) translateY(20px); } 18% { opacity: 1; transform: translateX(-50%) scale(1); } 82% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.9) translateY(-10px); } }
 body.calm .patrol-bubble.on { animation: none; opacity: 1; transform: translateX(-50%); }
 .code code, pre code { font: inherit; }
+
+.rec-evidence { margin: 8px 0 0; font: 400 13px/1.5 var(--sans); color: rgba(246,239,225,.6); }
+.rec-evidence b { font: 400 12px var(--type); text-transform: uppercase; letter-spacing: .08em; color: rgba(246,239,225,.5); margin-right: 8px; }
+.rec-evidence code { font: 12.5px var(--mono); color: #ffd6c9; background: rgba(255,255,255,.05); padding: 1px 6px; border-radius: 5px; word-break: break-all; }
+body.on-report .sub .tag.review { color: var(--amber); }
+
+/* Wisp, small, riding the progress bar */
+.hud-progress { position: relative; padding-top: 58px; }
+.hud-progress .reading-now { position: relative; z-index: 2; }
+.hud-progress .patrol { position: absolute; left: 0; top: 0; z-index: 3; }
+.hud-progress .patrol-glow { width: 220%; height: 220%; }
+.hud-progress .patrol-pose img { filter: drop-shadow(0 6px 8px rgba(3,6,20,.5)) drop-shadow(0 0 12px rgba(205,220,255,.3)); }
+.hud-progress .patrol-bubble { bottom: 88%; font-size: 13.5px; padding: 6px 12px 6px 9px; }
+.hud-progress .patrol-bubble span { font-size: 16px; }
+.hud-progress .scan-bar { height: 6px; }
+@media (max-width: 700px) { .hud-progress { padding-top: 46px; } }
+.hud-progress .scan-bar { order: 0; }
+.hud-progress .reading-now { order: 1; }

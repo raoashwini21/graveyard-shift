@@ -7,6 +7,9 @@ import net from 'node:net';
 
 export const USER_AGENT =
   'GraveyardShift/0.1 (site health scanner; +https://github.com/raoashwini21/graveyard-shift)';
+// Used only to double-check a link that looked dead, because some sites answer bots differently than people.
+export const BROWSER_AGENT =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36';
 
 const MAX_HOPS = 10;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -73,7 +76,7 @@ export function createFetcher({ timeoutMs = 10000, delayMs = 150, allowPrivate =
     return Buffer.concat(chunks).toString('utf8');
   }
 
-  async function request(url, method, { readBody = false, maxBytes = 2_000_000 } = {}) {
+  async function request(url, method, { readBody = false, maxBytes = 2_000_000, browser = false } = {}) {
     let u;
     try { u = new URL(url); } catch { return { error: 'bad-url' }; }
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return { error: 'unsupported' };
@@ -86,12 +89,16 @@ export function createFetcher({ timeoutMs = 10000, delayMs = 150, allowPrivate =
         method,
         redirect: 'manual',
         signal: ctrl.signal,
-        headers: { 'user-agent': USER_AGENT, accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
+        headers: browser
+          ? { 'user-agent': BROWSER_AGENT, accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8', 'accept-language': 'en-US,en;q=0.9' }
+          : { 'user-agent': USER_AGENT, accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
       });
       const out = {
         status: res.status,
         location: res.headers.get('location'),
         contentType: res.headers.get('content-type') || '',
+        server: (res.headers.get('server') || '').toLowerCase(),
+        challenge: Boolean(res.headers.get('cf-mitigated') || res.headers.get('x-amzn-waf-action')),
       };
       if (readBody && res.body && res.status < 300) out.body = await readLimited(res, maxBytes);
       else { try { await res.body?.cancel(); } catch {} }
@@ -105,16 +112,16 @@ export function createFetcher({ timeoutMs = 10000, delayMs = 150, allowPrivate =
   }
 
   // Follow redirects by hand so we can report each hop.
-  async function followOnce(url, { readBody = false } = {}) {
+  async function followOnce(url, { readBody = false, browser = false } = {}) {
     const hops = [];
     const seen = new Set([url]);
     let current = url;
     for (let i = 0; i < MAX_HOPS; i++) {
-      let r = readBody
-        ? await request(current, 'GET', { readBody: true })
+      let r = readBody || browser
+        ? await request(current, 'GET', { readBody, browser })
         : await request(current, 'HEAD');
       // Many servers mishandle HEAD (405, 403, 404, or just hang). Ask again with GET.
-      if (!readBody && !NO_RETRY.has(r.error) && (r.error || r.status >= 400)) {
+      if (!readBody && !browser && !NO_RETRY.has(r.error) && (r.error || r.status >= 400)) {
         const g = await request(current, 'GET');
         if (!g.error || r.error) r = g;
       }

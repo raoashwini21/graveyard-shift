@@ -32,7 +32,8 @@ const routes = {
     <a href="/noindex-page">Hidden</a>
     <a href="/untitled">Untitled</a>
     <a href="/admin">Admin</a>
-    <a href="https://n">Typo link</a>`)],
+    <a href="https://n">Typo link</a>
+    <a href="/bot-shy">Shy</a> <a href="/busy">Busy</a> <a href="/rate">Rate</a> <a href="/challenge">Challenge</a>`)],
   '/about': () => [200, 'text/html', page('About Spooky Co', '<p>We are friendly ghosts.</p><a href="/">Home</a>', { footer: FOOTER_OK })],
   '/events': () => [200, 'text/html', page('Events', `
     <h2>Upcoming webinar: Growth Night</h2>
@@ -77,6 +78,14 @@ export function startFixtureSite() {
         return setTimeout(() => { res.writeHead(200, { 'content-type': 'text/html' }); res.end(page('Slow', '<p>ok</p>')); }, 1200);
       }
       if (path === '/admin') { res.writeHead(500); return res.end('robots should have stopped you'); }
+      // Shows bots a 404 but serves people the page: must not be called dead.
+      if (path === '/bot-shy') {
+        const human = /Mozilla/.test(req.headers['user-agent'] || '');
+        res.writeHead(human ? 200 : 404, { 'content-type': 'text/html' }); return res.end(human ? page('Fine', '<p>ok</p>') : 'not found');
+      }
+      if (path === '/busy') { res.writeHead(503, { 'content-type': 'text/html' }); return res.end('busy'); }
+      if (path === '/rate') { res.writeHead(429, { 'content-type': 'text/html' }); return res.end('slow down'); }
+      if (path === '/challenge') { res.writeHead(403, { 'content-type': 'text/html', 'cf-mitigated': 'challenge' }); return res.end('just a moment'); }
       const route = routes[path];
       if (!route) { res.writeHead(404, { 'content-type': 'text/html' }); return res.end('not found'); }
       const [status, type, body] = route(port);

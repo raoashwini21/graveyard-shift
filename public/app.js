@@ -419,11 +419,23 @@
   const stampText = (g) => {
     const tag = statusTag(g);
     const k = KINDS[g.type].stamp;
+    if (g.confidence === 'maybe') return /^\d+$/.test(tag) ? `Needs review · ${tag}` : 'Needs review';
     if (g.type === 'dead' && /^\d+$/.test(tag)) return `${k} · ${tag}`;
     if (g.type === 'dead' && tag === 'domain gone') return `${k} · no domain`;
     if (g.type === 'chain' && tag) return `${k} · ${tag}`;
-    if (g.confidence === 'maybe') return `${k} · likely`;
+
     return k;
+  };
+  // Proof from the page itself: the exact link as written, its text, and what the server said.
+  const evidenceHtml = (g) => {
+    const d = g.detail || {}, ev = d.evidence;
+    if (!ev && !d.verified && !d.note) return '';
+    const bits = [];
+    if (ev) bits.push(`<code>&lt;a href="${esc(ev.href)}"&gt;${esc(ev.text || '')}&lt;/a&gt;</code>`);
+    if (d.status && g.type === 'dead') bits.push(`server said ${esc(d.status)}`);
+    if (d.verified) bits.push(esc(d.verified));
+    if (d.note) bits.push(esc(d.note));
+    return `<p class="rec-evidence"><b>Evidence</b>${bits.join(' · ')}</p>`;
   };
   const recordHtml = (g, i) => {
     const subjectUrl = ['stale-year', 'past-event'].includes(g.type) ? null : g.url;
@@ -440,14 +452,15 @@
     const tag = statusTag(g);
     const page = g.foundOn.find((p) => /^https?:/.test(p));
     const rested = state.banished.has(g.id);
-    const conf = g.confidence === 'maybe' ? 'Likely, worth a look' : g.confidence === 'unverified' ? 'Could not be checked' : 'Confirmed';
+    const conf = g.confidence === 'maybe' ? 'Needs review: probably real, worth a look' : g.confidence === 'unverified' ? 'Could not be checked' : 'Confirmed';
     return `<li class="record${rested ? ' rested' : ''}" data-id="${esc(g.id)}" data-conf="${esc(g.confidence)}">
       <span class="rec-no">Nº ${String(i + 1).padStart(2, '0')}</span>
       <span class="sev" title="${conf}"></span>
       <span class="rec-stamp" aria-hidden="true">${rested ? 'Laid to rest' : state.returned.has(g.id) ? 'Came back' : esc(stampText(g))}</span>
       <div class="rec-body">
         ${target}<span class="rest-note">Laid to rest</span>
-        <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag">· likely</span>' : ''}${state.returned.has(g.id) ? ' <span class="tag back">· you marked this fixed, but it\'s still there</span>' : ''}</p>
+        <p class="sub">${where}${tag ? ` <span class="tag">· ${esc(tag)}</span>` : ''}${g.confidence === 'maybe' ? ' <span class="tag review">· needs review</span>' : ''}${state.returned.has(g.id) ? ' <span class="tag back">· you marked this fixed, but it\'s still there</span>' : ''}</p>
+        ${evidenceHtml(g)}
         ${g.type === 'locked' ? '' : `<p class="fix"><b>The cure</b>${esc(g.fix)}</p>`}
       </div>
       <div class="acts">
@@ -491,7 +504,7 @@
   };
 
   const paintPlain = () => {
-    const rows = aliveAll().map((g) => `<tr><td>${esc(g.name)}${g.confidence === 'maybe' ? ' (likely)' : ''}</td>
+    const rows = aliveAll().map((g) => `<tr><td>${esc(g.name)}${g.confidence === 'maybe' ? ' (needs review)' : ''}</td>
       <td>${esc(g.quote ? '“' + g.quote + '”' : shortUrl(g.url))}</td>
       <td>${esc(shortUrl(g.foundOn[0]))}${g.foundOn.length > 1 ? ` and ${g.foundOn.length - 1} more` : ''}</td>
       <td>${esc(g.fix)}</td></tr>`).join('');

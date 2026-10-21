@@ -87,6 +87,41 @@ test('robots parser: longest match wins, allow beats disallow on a tie', () => {
   assert.equal(r.isAllowed('/'), true);
 });
 
+test('accuracy: only real dead pages are called dead', () => {
+  // 404 and 410 are confirmed, and double-checked as a browser
+  assert.equal(find('dead', '/old-page').confidence, 'confirmed');
+  assert.match(find('dead', '/old-page').detail.verified, /browser/);
+  // a 500 might be temporary, so it is dead but needs review
+  assert.equal(find('dead', '/broken').confidence, 'maybe');
+  // a site that answers bots with 404 but people with the page is fine
+  assert.ok(!result.ghosts.some((g) => path(g.url) === '/bot-shy'), 'bot-shy page must not be a ghost');
+  // bot walls, rate limits, busy servers and forbidden pages are locked doors, never dead
+  for (const p of ['/busy', '/rate', '/challenge', '/private']) {
+    assert.ok(!find('dead', p), p + ' must not be dead');
+    assert.ok(find('locked', p), p + ' should be a locked door');
+  }
+});
+
+test('accuracy: classification of errors and statuses', () => {
+  const c = (r, u = 'https://other.com/x') => classifyLink({ hops: [], finalUrl: u, ...r }, u, [], false);
+  assert.equal(c({ error: 'timeout' }).type, 'locked');
+  assert.equal(c({ error: 'ECONNRESET' }).type, 'locked');
+  assert.equal(c({ error: 'ECONNREFUSED' }).type, 'locked');
+  assert.equal(c({ error: 'ERR_SSL_WRONG_VERSION_NUMBER' }).type, 'locked');
+  assert.equal(c({ error: 'ENOTFOUND' }).type, 'dead');
+  for (const st of [401, 403, 429, 503, 520, 999]) assert.equal(c({ status: st }).type, 'locked', 'status ' + st);
+  assert.equal(c({ status: 403, challenge: true }).type, 'locked');
+  assert.equal(c({ status: 404 }).type, 'dead');
+  assert.equal(c({ status: 502 }).confidence, 'maybe');
+});
+
+test('every dead link carries the exact link from the page as evidence', () => {
+  const g = result.ghosts.find((x) => x.url === 'https://n/');
+  assert.equal(g.detail.evidence.href, 'https://n');
+  assert.equal(g.detail.evidence.text, 'Typo link');
+  assert.ok(find('dead', '/old-page').detail.evidence.href);
+});
+
 test('a typo link like https://n/ is a broken address, found without fetching', () => {
   const g = result.ghosts.find((x) => x.url === 'https://n/');
   assert.ok(g);

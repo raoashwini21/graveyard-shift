@@ -204,10 +204,13 @@ window.Yard = (() => {
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // ---------- Patrol ----------
-  const S = { fx: 0.14, tfx: 0.14, x: 0, vx: 0, face: 1, running: false, hop: 0, flare: 0 };
+  // Wisp rides the progress bar: a small lantern-bearer whose position is exactly how far the scan has got.
+  const rail = document.querySelector('.hud-progress');
+  if (rail) rail.appendChild(patrol);
+  const S = { fx: 0, tfx: 0, x: 0, vx: 0, face: 1, running: false, hop: 0, flare: 0 };
   const GLOW = { search: [0.16, 0.37], point: [0.19, 0.56], gasp: [0.18, 0.57], happy: [0.37, 0.5] };
   const progress = (f) => {
-    S.tfx = 0.14 + Math.max(0, Math.min(1, f)) * 0.72;
+    S.tfx = Math.max(0, Math.min(1, f));
     const n = Math.ceil(Math.max(0, Math.min(1, f)) * lamps.length - 0.001);
     lamps.forEach((l, i) => {
       if (i < n && !l.lit) { l.lit = true; l.el.classList.add('lit'); }
@@ -218,7 +221,7 @@ window.Yard = (() => {
     tombs.forEach((t) => t.el.remove()); tombs = [];
     queue.length = 0; overflow = 0; if (sign) { sign.remove(); sign = null; }
     document.querySelectorAll('.tomb-big').forEach((b) => b.remove());
-    S.fx = S.tfx = 0.14; S.vx = 0; S.face = 1; S.running = true;
+    S.fx = S.tfx = 0; S.vx = 0; S.face = 1; S.running = true;
     buildLamps();
     lamps.forEach((l) => l.el.classList.remove('lit'));
     setPose('search');
@@ -244,13 +247,15 @@ window.Yard = (() => {
       const k = 9, d = 5.5;
       S.vx += ((S.tfx - S.fx) * k - S.vx * d) * dt; S.fx += S.vx * dt;
     }
-    const size = Math.max(140, Math.min(290, W * 0.17));
+    const bar = rail ? rail.querySelector('.scan-bar') : null;
+    const BW = bar ? bar.clientWidth : W;
+    const size = W < 700 ? 54 : 74;
     const t = now / 1000;
-    const bob = calm ? 0 : Math.sin(t * 1.7) * 10 + Math.sin(t * 0.6) * 5;
+    const bob = calm ? 0 : Math.sin(t * 2.2) * 3;
     S.hop = Math.max(0, S.hop - dt * 1.6); S.flare = Math.max(0, S.flare - dt * 1.1);
-    const hop = calm ? 0 : Math.sin(S.hop * Math.PI) * 46 * S.hop;
-    const x = S.fx * W - size / 2, y = H * 0.72 - size + bob - hop;
-    const tilt = calm ? 0 : Math.max(-10, Math.min(10, S.vx * 120)) + Math.sin(t * 0.8) * 2;
+    const hop = calm ? 0 : Math.sin(S.hop * Math.PI) * 18 * S.hop;
+    const x = Math.min(BW - size * 0.55, Math.max(-size * 0.35, S.fx * BW - size * 0.45)), y = (bar ? bar.offsetTop : 0) - size * 0.86 + bob - hop;
+    const tilt = calm ? 0 : Math.max(-8, Math.min(8, S.vx * 60)) + Math.sin(t * 0.8) * 1.5;
     patrol.style.width = patrol.style.height = size + 'px';
     patrol.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${tilt.toFixed(2)}deg)`;
 

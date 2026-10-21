@@ -78,7 +78,7 @@ export function toText(result, { color = false, showLocked = false } = {}) {
   lines.push('');
   for (const g of result.ghosts) {
     if (g.type === 'locked' && !showLocked) continue;
-    const tag = g.confidence === 'maybe' ? c('33', ' (maybe)') : g.confidence === 'unverified' ? c('2', ' (unverified)') : '';
+    const tag = g.confidence === 'maybe' ? c('33', ' (needs review)') : g.confidence === 'unverified' ? c('2', ' (unverified)') : '';
     lines.push(`  ${ICON[g.type] || '👻'} ${c('1', g.name)}${tag}  ${c('3', g.label)}`);
     if (g.url && g.type !== 'stale-year' && g.type !== 'past-event') lines.push(`     ${g.url}`);
     if (g.quote) lines.push(c('2', `     "${g.quote}"`));
@@ -117,9 +117,10 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
     out.push('| | Ghost | Where | Fix |', '| --- | --- | --- | --- |');
     for (const g of list) {
       const subject = g.quote ? `“${g.quote.replace(/\|/g, '\\|')}”` : `\`${short(g.url, result.site)}\``;
-      const tag = g.confidence === 'maybe' ? ' *(maybe)*' : g.confidence === 'unverified' ? ' *(unverified)*' : '';
+      const tag = g.confidence === 'maybe' ? ' *(needs review)*' : g.confidence === 'unverified' ? ' *(unverified)*' : '';
+      const ev = g.detail?.evidence ? `<br>On the page: \`<a href="${g.detail.evidence.href.replace(/[|`]/g, '')}">${(g.detail.evidence.text || '').replace(/[|`]/g, '')}</a>\`` : '';
       const fresh = newIds.has(g.id) ? ' 🆕' : '';
-      out.push(`| ${ICON[g.type] || '👻'} | **${g.name}**${tag}${fresh}<br>${g.label}<br>${subject} | ${where(g).replace(/^on /, '')} | ${g.fix.replace(/\|/g, '\\|')} |`);
+      out.push(`| ${ICON[g.type] || '👻'} | **${g.name}**${tag}${fresh}<br>${g.label}<br>${subject}${ev} | ${where(g).replace(/^on /, '')} | ${g.fix.replace(/\|/g, '\\|')} |`);
     }
     out.push('');
   };
@@ -144,7 +145,7 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
 
 export function toCsv(result) {
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const head = ['type', 'confidence', 'url', 'quote', 'label', 'fix', 'found_on'];
-  const rows = result.ghosts.map((g) => [g.type, g.confidence, g.url, g.quote, g.label, g.fix, g.foundOn.join(' ')].map(esc).join(','));
+  const head = ['type', 'confidence', 'url', 'quote', 'label', 'fix', 'found_on', 'link_as_written', 'link_text', 'status'];
+  const rows = result.ghosts.map((g) => [g.type, g.confidence, g.url, g.quote, g.label, g.fix, g.foundOn.join(' '), g.detail?.evidence?.href, g.detail?.evidence?.text, g.detail?.status].map(esc).join(','));
   return [head.join(','), ...rows].join('\n') + '\n';
 }

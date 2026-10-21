@@ -115,6 +115,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   // Crawl pages in waves
   const linkResults = new Map(); // url -> follow() result, so we don't fetch twice
   const linksFound = new Map(); // url -> Set(pages it appears on)
+  const linkMeta = new Map(); // url -> { href, text, page } as first seen
   const findings = [];
   const visited = new Set();
   const pages = [];
@@ -150,6 +151,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     for (const fd of a.findings) findings.push({ ...fd, page: finalUrl });
     for (const link of a.links) {
       if (ignored(link)) continue;
+      if (!linkMeta.has(link) && a.linkMeta[link]) linkMeta.set(link, { ...a.linkMeta[link], page: finalUrl });
       const set = linksFound.get(link) || new Set();
       set.add(finalUrl);
       linksFound.set(link, set);
@@ -213,15 +215,27 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     if (isMalformed(url)) {
       checked++;
       emit({ type: 'link', url, status: 'broken', linksChecked: checked, linksTotal: toCheck.length });
-      addGhost('dead', url, foundOn, { url, data: { reason: 'malformed' }, detail: { error: 'malformed' } });
+      addGhost('dead', url, foundOn, { url, data: { reason: 'malformed' }, detail: { error: 'malformed', evidence: linkMeta.get(url) || null } });
       return;
     }
     let r = linkResults.get(url);
     if (!r) { r = await f.follow(url); linkResults.set(url, r); }
     checked++;
     emit({ type: 'link', url, status: r.loop ? 'loop' : (r.status || r.error || null), hops: r.hops ? r.hops.length : 0, linksChecked: checked, linksTotal: toCheck.length });
-    const g = classifyLink(r, url, opts.botShy, sameSite(url));
-    if (g) addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
+    let g = classifyLink(r, url, opts.botShy, sameSite(url));
+    // Before calling anything dead by its status code, ask once more the way a browser would.
+    // If a person would get the page, it isn't dead; if the site now refuses us, we can't tell.
+    if (g && g.type === 'dead' && r.status) {
+      const again = await f.follow(url, { browser: true });
+      if (!again.error && again.status < 400) g = classifyLink(again, url, opts.botShy, sameSite(url));
+      else if (again.status === 404 || again.status === 410) g.detail = { ...g.detail, verified: 'checked twice, the second time as a browser' };
+      else if (again.status !== r.status) g = { type: 'locked', detail: { ...g.detail, status: again.status ?? r.status, reason: 'answers bots and browsers differently' } };
+    }
+    if (g) {
+      const ev = linkMeta.get(url);
+      if (ev) g.detail = { ...(g.detail || {}), evidence: ev };
+      addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
+    }
   });
 
   for (const fd of findings) {
@@ -279,11 +293,19 @@ export function classifyLink(r, url = r.finalUrl, botShy = DEFAULTS.botShy, inte
   if (r.loop) return { type: 'chain', data: { loop: true }, detail };
   if (r.error) {
     if (r.error === 'ENOTFOUND') return { type: 'dead', data: { reason: 'dns' }, detail };
-    return { type: 'locked', detail: { ...detail, reason: r.error } };
+    const why = { timeout: 'no answer within 10 seconds', ECONNREFUSED: 'refused the connection', ECONNRESET: 'cut the connection' }[r.error]
+      || (/SSL|CERT|TLS/i.test(r.error) ? 'secure connection failed' : r.error);
+    return { type: 'locked', detail: { ...detail, reason: why } };
+  }
+  // Bot walls (Cloudflare, AWS WAF, rate limits) are not dead pages.
+  if (r.challenge || r.status === 429 || r.status === 403 || r.status === 401 || r.status === 999) {
+    return { type: 'locked', detail: { ...detail, reason: r.status === 429 ? 'rate limited' : r.challenge ? 'bot check' : `status ${r.status}` } };
   }
   if (r.status === 404 || r.status === 410) return { type: 'dead', data: { status: r.status }, detail };
-  if (r.status >= 500) return { type: 'dead', data: { status: r.status }, detail };
-  if (r.status >= 400 || r.status === 999) return { type: 'locked', detail: { ...detail, reason: `status ${r.status}` } };
+  // 503 and Cloudflare's 52x are usually "busy" or bot protection; other server errors may be temporary.
+  if (r.status === 503 || (r.status >= 520 && r.status <= 530)) return { type: 'locked', detail: { ...detail, reason: `server busy (status ${r.status})` } };
+  if (r.status >= 500) return { type: 'dead', confidence: 'maybe', data: { status: r.status }, detail: { ...detail, note: 'server error; may be temporary' } };
+  if (r.status >= 400) return { type: 'locked', detail: { ...detail, reason: `status ${r.status}` } };
   if (!hops) return null;
   if (internal) {
     // Your own site: every extra hop is yours to fix.

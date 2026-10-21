@@ -66,6 +66,7 @@ export function analyzePage(html, pageUrl, { now = new Date(), quietPaths = [] }
   let base = pageUrl;
   try { if (baseHref) base = new URL(baseHref, pageUrl).href; } catch {}
   const links = new Set();
+  const linkMeta = {}; // url -> the exact href and link text, as evidence
   for (const a of root.querySelectorAll('a[href]')) {
     const href = (a.getAttribute('href') || '').trim();
     if (!href || SKIP_HREF.test(href)) continue;
@@ -74,6 +75,7 @@ export function analyzePage(html, pageUrl, { now = new Date(), quietPaths = [] }
       if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
       u.hash = '';
       links.add(u.href);
+      if (!linkMeta[u.href]) linkMeta[u.href] = { href: href.slice(0, 300), text: a.text.replace(/\s+/g, ' ').trim().slice(0, 120) };
     } catch {}
   }
 
@@ -142,5 +144,5 @@ export function analyzePage(html, pageUrl, { now = new Date(), quietPaths = [] }
     });
   }
 
-  return { title, description, noindex, links: [...links], findings };
+  return { title, description, noindex, links: [...links], linkMeta, findings };
 }
