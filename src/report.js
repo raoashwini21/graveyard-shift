@@ -118,7 +118,8 @@ export function toMarkdown(result, { diff = null, title = null } = {}) {
     for (const g of list) {
       const subject = g.quote ? `“${g.quote.replace(/\|/g, '\\|')}”` : `\`${short(g.url, result.site)}\``;
       const tag = g.confidence === 'maybe' ? ' *(needs review)*' : g.confidence === 'unverified' ? ' *(unverified)*' : '';
-      const ev = g.detail?.evidence ? `<br>On the page: \`<a href="${g.detail.evidence.href.replace(/[|`]/g, '')}">${(g.detail.evidence.text || '').replace(/[|`]/g, '')}</a>\`` : '';
+      const e = g.detail?.evidence, clean = (x) => String(x || '').replace(/[|`]/g, '');
+      const ev = e ? (g.detail.error === 'malformed' ? `<br>Written on the page as \`${clean(e.href)}\`${e.text ? ` (“${clean(e.text)}”)` : ''}` : e.text ? `<br>Link text “${clean(e.text)}”` : '') : '';
       const fresh = newIds.has(g.id) ? ' 🆕' : '';
       out.push(`| ${ICON[g.type] || '👻'} | **${g.name}**${tag}${fresh}<br>${g.label}<br>${subject}${ev} | ${where(g).replace(/^on /, '')} | ${g.fix.replace(/\|/g, '\\|')} |`);
     }

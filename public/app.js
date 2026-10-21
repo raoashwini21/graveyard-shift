@@ -427,15 +427,17 @@
     return k;
   };
   // Proof from the page itself: the exact link as written, its text, and what the server said.
+  // Proof in plain words: the link text you'd look for on the page, plus what the server or the redirect did.
+  // The exact address is shown only when the address itself is what's wrong.
   const evidenceHtml = (g) => {
-    const d = g.detail || {}, ev = d.evidence;
-    if (!ev && !d.verified && !d.note) return '';
-    const bits = [];
-    if (ev) bits.push(`<code>&lt;a href="${esc(ev.href)}"&gt;${esc(ev.text || '')}&lt;/a&gt;</code>`);
-    if (d.status && g.type === 'dead') bits.push(`server said ${esc(d.status)}`);
-    if (d.verified) bits.push(esc(d.verified));
+    const d = g.detail || {}, ev = d.evidence, bits = [];
+    if (d.error === 'malformed' && ev) bits.push(`written on the page as <code>${esc(ev.href)}</code>${ev.text ? ` (“${esc(ev.text)}”)` : ''}`);
+    else if (ev && ev.text) bits.push(`link text “${esc(ev.text)}”`);
+    if (g.type === 'possessed' && d.finalUrl) bits.push(`now lands on ${esc(hostOf(d.finalUrl))}`);
+    if (g.type === 'dead' && d.status) bits.push(`server said ${esc(d.status)}`);
+    if (d.verified) bits.push('double-checked as a browser');
     if (d.note) bits.push(esc(d.note));
-    return `<p class="rec-evidence"><b>Evidence</b>${bits.join(' · ')}</p>`;
+    return bits.length ? `<p class="rec-evidence"><b>Evidence</b>${bits.join(' · ')}</p>` : '';
   };
   const recordHtml = (g, i) => {
     const subjectUrl = ['stale-year', 'past-event'].includes(g.type) ? null : g.url;
