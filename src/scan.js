@@ -116,7 +116,6 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   const linkResults = new Map(); // url -> follow() result, so we don't fetch twice
   const linksFound = new Map(); // url -> Set(pages it appears on)
   const linkMeta = new Map(); // url -> { href, text, page } as first seen
-  const findings = [];
   const visited = new Set();
   const pages = [];
   let robotsSkipped = 0;
@@ -125,6 +124,37 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   linkResults.set(homeUrl, home);
   let frontier = [homeUrl, ...fromSitemap];
   const sitemapSet = new Set(fromSitemap);
+
+  const ghosts = new Map();
+  const addGhost = (type, key, foundOn, extra = {}) => {
+    const id = ghostId(type, key);
+    const existing = ghosts.get(id);
+    if (existing) {
+      for (const p of foundOn) if (!existing.foundOn.includes(p)) existing.foundOn.push(p);
+      return;
+    }
+    const { label, fix } = describe(type, extra.data);
+    if (type !== 'locked') emit({ type: 'presence', kind: type, url: extra.url || foundOn[0] || null });
+    ghosts.set(id, {
+      id,
+      type,
+      name: GHOST_TYPES[type].name,
+      confidence: extra.confidence || GHOST_TYPES[type].confidence,
+      url: extra.url || null,
+      foundOn: [...foundOn],
+      label,
+      fix,
+      quote: extra.quote || null,
+      detail: extra.detail || null,
+    });
+  };
+
+  // Page problems (titles, descriptions, old years, past events) are reported the moment the page is read,
+  // so they appear while Wisp is still walking instead of all at the end.
+  const addFinding = (fd) => {
+    if (fd.type === 'nameless' || fd.type === 'speechless') addGhost(fd.type, fd.key, [fd.page], { url: fd.page });
+    else addGhost(fd.type, fd.key, [fd.page], { quote: fd.quote, data: fd.data, confidence: fd.confidence, url: fd.page });
+  };
 
   const crawlPage = async (url) => {
     let r = linkResults.get(url);
@@ -148,7 +178,7 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
     visited.add(finalUrl);
     pages.push(finalUrl);
     const a = analyzePage(r.body, finalUrl, { now, quietPaths: opts.quietPaths });
-    for (const fd of a.findings) findings.push({ ...fd, page: finalUrl });
+    for (const fd of a.findings) addFinding({ ...fd, page: finalUrl });
     for (const link of a.links) {
       if (ignored(link)) continue;
       if (!linkMeta.has(link) && a.linkMeta[link]) linkMeta.set(link, { ...a.linkMeta[link], page: finalUrl });
@@ -184,30 +214,6 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
   toCheck = toCheck.slice(0, opts.maxLinks);
   emit({ type: 'phase', phase: 'knocking on every door', linksTotal: toCheck.length });
 
-  const ghosts = new Map();
-  const addGhost = (type, key, foundOn, extra = {}) => {
-    const id = ghostId(type, key);
-    const existing = ghosts.get(id);
-    if (existing) {
-      for (const p of foundOn) if (!existing.foundOn.includes(p)) existing.foundOn.push(p);
-      return;
-    }
-    const { label, fix } = describe(type, extra.data);
-    if (type !== 'locked') emit({ type: 'presence', kind: type, url: extra.url || foundOn[0] || null });
-    ghosts.set(id, {
-      id,
-      type,
-      name: GHOST_TYPES[type].name,
-      confidence: extra.confidence || GHOST_TYPES[type].confidence,
-      url: extra.url || null,
-      foundOn: [...foundOn],
-      label,
-      fix,
-      quote: extra.quote || null,
-      detail: extra.detail || null,
-    });
-  };
-
   let checked = 0;
   await pool(toCheck, opts.concurrency, async (url) => {
     const foundOn = [...linksFound.get(url)];
@@ -237,14 +243,6 @@ export async function scan(startInput, options = {}, onEvent = () => {}) {
       addGhost(g.type, url, foundOn, { url, data: g.data, confidence: g.confidence, detail: g.detail });
     }
   });
-
-  for (const fd of findings) {
-    if (fd.type === 'nameless' || fd.type === 'speechless') {
-      addGhost(fd.type, fd.key, [fd.page], { url: fd.page });
-    } else {
-      addGhost(fd.type, fd.key, [fd.page], { quote: fd.quote, data: fd.data, confidence: fd.confidence, url: fd.page });
-    }
-  }
 
   const list = sortGhosts([...ghosts.values()]);
   const real = list.filter((g) => g.type !== 'locked');

@@ -104,7 +104,14 @@ export function digestMarkdown(d, mention, { reportUrl, turnOffUrl } = {}) {
   if (d.still.length && !d.firstRun) {
     const oldest = [...d.still].sort((a, b) => (a.firstSeen || '').localeCompare(b.firstSeen || ''));
     L.push('### 🕯️ Still haunting', '', `${n_(d.still.length, 'ghost')} from earlier weeks ${d.still.length === 1 ? 'is' : 'are'} still here, the oldest since ${shortDay(oldest[0].firstSeen)}. Not repeated in full:`, '');
-    for (const g of oldest.slice(0, 3)) L.push(`- ${(KIND[g.type] || ['👻'])[0]} ${what(g)} on ${where(g)} · since ${shortDay(g.firstSeen)}`);
+    // One line per kind, so six dead links read as one line, not six identical ones.
+    const kinds = new Map();
+    for (const g of oldest) { if (!kinds.has(g.type)) kinds.set(g.type, []); kinds.get(g.type).push(g); }
+    for (const [type, gs] of [...kinds].slice(0, 4)) {
+      const g = gs[0], icon = (KIND[type] || ['👻'])[0];
+      L.push(gs.length === 1 ? `- ${icon} ${what(g)} on ${where(g)} · since ${shortDay(g.firstSeen)}` : `- ${icon} ${gs.length} × ${what(g)} · since ${shortDay(g.firstSeen)}`);
+    }
+    if (kinds.size > 4) L.push(`- …and ${n_([...kinds].slice(4).reduce((a, [, gs]) => a + gs.length, 0), 'more')}`);
     L.push('');
   }
   if (d.resolved.length) {
@@ -113,7 +120,7 @@ export function digestMarkdown(d, mention, { reportUrl, turnOffUrl } = {}) {
 ${d.resolved.slice(0, 6).map((g) => `<s>${escHtml(subjectOf(g, site))}</s> · ${escHtml(what(g))}`).join('<br>')}</td></tr></table>`, '');
   }
   if (reportUrl) L.push(`<p align="center"><a href="${reportUrl}"><b>🏮 View the full investigation →</b></a></p>`, '');
-  L.push(`<sub>${r.lockedCount ? `${n_(r.lockedCount, 'link')} on sites that block bots couldn't be checked, so they aren't counted. ` : ''}Only problems Wisp could verify are reported; anything uncertain says needs review. Nothing is marked fixed until a new scan re-checks it. You hear from Wisp only when something new moves in.${turnOffUrl ? ` To stop the weekly checks, <a href="${turnOffUrl}">disable the workflow</a>.` : ''}</sub>`);
+  L.push(`<sub>${r.lockedCount ? `${r.lockedCount === 1 ? "1 link on a site that blocks bots couldn't be checked, so it isn't counted. " : `${r.lockedCount} links on sites that block bots couldn't be checked, so they aren't counted. `}` : ''}Only problems Wisp could verify are reported; anything uncertain says needs review. Nothing is marked fixed until a new scan re-checks it. You hear from Wisp only when something new moves in.${turnOffUrl ? ` To stop the weekly checks, <a href="${turnOffUrl}">disable the workflow</a>.` : ''}</sub>`);
   return L.join('\n');
 }
 
