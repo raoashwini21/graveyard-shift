@@ -24,7 +24,7 @@ npm install
 npm start
 ```
 
-Open **http://localhost:3000**, paste your website, and watch Wisp go to work. Want him to keep checking every week, with nothing to install? [Hire the night watchman](#hire-the-night-watchman).
+Open **http://localhost:3000**, paste your website, and watch Wisp go to work. <br>Want him to keep checking every week, with nothing to install? [Hire the night watchman](#hire-the-night-watchman).
 
 ![The Graveyard Shift home page](.github/readme/home.jpg)
 
