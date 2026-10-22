@@ -89,7 +89,16 @@
     const buf = await load(name); if (!buf) return;
     const src = audio.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
     const g = audio.createGain(); g.gain.value = gain; src.connect(g).connect(master); src.start(audio.currentTime + delay);
+    return { src, g };
   };
+  // Fade a sound out quickly so the next one has the stage to itself.
+  const fade = (h, sec = 0.35) => {
+    if (!h || !audio) return;
+    const now = audio.currentTime;
+    try { h.g.gain.cancelScheduledValues(now); h.g.gain.setValueAtTime(h.g.gain.value, now); h.g.gain.linearRampToValueAtTime(0, now + sec); h.src.stop(now + sec + 0.05); } catch {}
+  };
+  // One tombstone speaks at a time: a new stone fades out the last one's cry, and waits a beat after a landing thud.
+  let cry = null, grind = null, landedAt = 0;
   const ambience = async (on) => {
     if (!ctx()) return;
     if (on) {
@@ -112,11 +121,16 @@
     answer: () => {},
     banish: () => play('banish', { gain: 0.8 }),
     // Every tombstone that pops up grinds out of the earth with its ghost's own cry, then thuds into place.
-    tombRise: (kind) => { play('tomb-rise', { gain: 0.6, rate: 0.92 + Math.random() * 0.16 }); setTimeout(() => sfx.felt(kind), 180); },
-    tombLand: () => play('tomb-land', { gain: 0.7, rate: 0.9 + Math.random() * 0.2 }),
+    tombRise: async (kind) => {
+      fade(cry); fade(grind, 0.2); cry = grind = null;
+      const wait = Math.max(0, 0.35 - (performance.now() - landedAt) / 1000);
+      grind = await play('tomb-rise', { gain: 0.55, rate: 0.92 + Math.random() * 0.16, delay: wait });
+      cry = await play('ghost-' + (kind || 'dead'), { gain: 0.75, rate: 0.94 + Math.random() * 0.12, delay: wait + 0.2 });
+    },
+    tombLand: () => { fade(grind, 0.15); grind = null; landedAt = performance.now(); play('tomb-land', { gain: 0.7, rate: 0.9 + Math.random() * 0.2 }); },
     restore: () => play('creak', { gain: 0.5, rate: 1.3 }),
     scare: () => play('scare', { gain: 0.9 }),
-    hush: () => { ambience(false); play('heartbeat', { gain: 1 }); },
+    hush: () => { fade(cry, 0.8); fade(grind, 0.3); cry = grind = null; ambience(false); play('heartbeat', { gain: 1 }); },
     knock: () => play('knock', { gain: 0.8 }),
     creak: () => play('creak', { gain: 0.45, rate: 0.9 + Math.random() * 0.3 }),
     lit: () => play('reveal', { gain: 1 }),
@@ -375,6 +389,8 @@
     const wait = (ms) => (skip ? Promise.resolve() : sleep(ms));
     await wait(700);
     await wait(900);
+    // Let every tombstone finish speaking before the knock that ends the walk.
+    if (window.Yard && document.body.classList.contains('on-yard')) { await Yard.drain(skip ? 0 : 6000); await wait(700); }
     sfx.knock(); await wait(1100);
     setPhase(n ? `${fmt(n)} ghost${n === 1 ? '' : 's'} in this graveyard.` : 'Not a single ghost. Wisp is delighted.');
     await wait(1600);
