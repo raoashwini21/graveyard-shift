@@ -205,3 +205,27 @@ ban = mix(bp(noise(1.6), 300, 6000) * np.linspace(0, 1, int(1.6 * SR)) ** 2 * np
           at(bell(1318.5, 2.0, ((1, 1), (2.0, 0.5), (3.01, 0.25)), 2.2) * 0.5, 0.9, 3),
           at(bell(1975.5, 1.8, ((1, 1), (2.0, 0.4)), 2.6) * 0.35, 1.05, 3))
 save('banish', reverb(ban, 0.45, 2.8, 8000), -4)
+
+# A tombstone heaving up out of the earth: low stone-on-stone grinding with gravel trickling off it.
+# Its own random generator, so adding it never changes the sounds above.
+def tomb_rise(sec=1.1, seed=21):
+    r = np.random.default_rng(seed); n = int(sec * SR); tt = np.arange(n) / SR
+    grind = lp(r.standard_normal(n).cumsum() / 60, 420, 4) * (0.6 + 0.4 * np.sin(2 * np.pi * 7 * tt + 1))
+    grind = resonator(grind, 95, 3) * 0.7 + grind * 0.5
+    grit = np.zeros(n)
+    for k in r.choice(n - 2000, 70, replace=False):
+        g = bp(r.standard_normal(1600), 1800, 6000) * np.exp(-np.arange(1600) / SR * 160) * r.uniform(0.1, 0.4)
+        grit[k:k + 1600] += g
+    shape = np.minimum(1, (tt / 0.25) ** 2) * np.exp(-np.maximum(0, tt - 0.75) * 9)
+    return (grind + grit * 0.6) * shape
+save('tomb-rise', reverb(tomb_rise(), 0.3, 1.8, 3000), -3)
+
+# ...and settling into the ground: a heavy thud with a little earth spilling after it.
+def tomb_land(seed=22):
+    r = np.random.default_rng(seed); sec = 1.0; tt = np.arange(int(sec * SR)) / SR
+    f = 38 + 50 * np.exp(-tt * 22)
+    thud = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt * 9)
+    hit = lp(r.standard_normal(len(tt)), 900) * np.exp(-tt * 45) * 0.6
+    dirt = bp(r.standard_normal(len(tt)), 1500, 5000) * np.exp(-np.maximum(0, tt - 0.05) * 14) * (tt > 0.05) * 0.12
+    return thud + hit + dirt
+save('tomb-land', reverb(tomb_land(), 0.25, 1.4, 2500), -2)

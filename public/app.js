@@ -104,13 +104,16 @@
       setTimeout(() => { try { s.stop(); } catch {} }, 2700);
     }
   };
-  const warm = () => { if (ctx()) ['creak', 'knock', 'ambience', 'heartbeat', 'reveal', 'banish', 'ghost-dead'].forEach(load); };
+  const warm = () => { if (ctx()) ['creak', 'knock', 'ambience', 'heartbeat', 'reveal', 'banish', 'tomb-rise', 'tomb-land', 'ghost-dead', 'ghost-possessed', 'ghost-past-event', 'ghost-stale-year', 'ghost-nameless', 'ghost-chain', 'ghost-speechless'].forEach(load); };
   const sfx = {
     tick: () => {},
     felt: (kind) => play('ghost-' + (kind || 'dead'), { gain: 0.8, rate: 0.94 + Math.random() * 0.12 }),
     invoke: () => { play('creak', { gain: 0.9 }); ambience(true); },
     answer: () => {},
     banish: () => play('banish', { gain: 0.8 }),
+    // Every tombstone that pops up grinds out of the earth with its ghost's own cry, then thuds into place.
+    tombRise: (kind) => { play('tomb-rise', { gain: 0.6, rate: 0.92 + Math.random() * 0.16 }); setTimeout(() => sfx.felt(kind), 180); },
+    tombLand: () => play('tomb-land', { gain: 0.7, rate: 0.9 + Math.random() * 0.2 }),
     restore: () => play('creak', { gain: 0.5, rate: 1.3 }),
     scare: () => play('scare', { gain: 0.9 }),
     hush: () => { ambience(false); play('heartbeat', { gain: 1 }); },
@@ -273,7 +276,7 @@
     const now = Date.now();
     if (now - lastWhisper > 2200) {
       lastWhisper = now;
-      sfx.felt(e.kind);
+      if (!window.Yard) sfx.felt(e.kind);
       const w = $('whisper');
       w.textContent = (WHISPERS[e.kind] || (() => 'Something moved.'))(e.url ? shortPath(e.url) : 'this house');
       w.classList.add('on');
@@ -304,7 +307,7 @@
     $('log').innerHTML = '';
     $('whisper').classList.remove('on');
     reading('Checking', 'the front gate');
-    if (window.Yard) Yard.start();
+    if (window.Yard) { Yard.onSound((what, kind) => (what === 'rise' ? sfx.tombRise(kind) : sfx.tombLand())); Yard.start(); }
     setProgress(0);
     show('scan');
     document.body.classList.add('scanning');

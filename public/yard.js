@@ -139,6 +139,8 @@ window.Yard = (() => {
 
   // Every ghost gets its moment in the big tombstone, in order. When they pour in, ghosts of the same kind
   // that are waiting together share one stone ("4 links that lead nowhere"), so the line never backs up.
+  // Sounds are played by the app (it owns the audio and the sound switch); the yard just says when.
+  let hear = () => {};
   const queue = [];
   let running = false, flushing = false;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -168,6 +170,7 @@ window.Yard = (() => {
       <p class="tomb-say"><b>${esc(line)}</b><span>${esc(sub)}</span></p>`;
     document.body.appendChild(big);
     requestAnimationFrame(() => big.classList.add('on'));
+    hear('rise', kind);
     react();
     const hold = behind > 4 ? 800 : behind > 1 ? 1100 : 1500;
     await sleep(hold);
@@ -183,6 +186,7 @@ window.Yard = (() => {
       await sleep(350);
     }
     big.remove();
+    hear('land', kind);
     group.forEach(rise);
   };
   // The reveal waits for the line to finish; if it's still long, the rest rise at once.
@@ -299,5 +303,5 @@ window.Yard = (() => {
     setTimeout(wait, 900);
     box.addEventListener('click', finish);
   });
-  return { start, progress, page, found, finish, reveal, drain, setLamps: (l) => { LAMPS = l; buildLamps(); } };
+  return { onSound: (fn) => { hear = fn; }, start, progress, page, found, finish, reveal, drain, setLamps: (l) => { LAMPS = l; buildLamps(); } };
 })();
