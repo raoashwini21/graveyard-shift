@@ -11,9 +11,10 @@ Then he shows you what's quietly broken, and how to fix it.</p>
 
 <p align="center">Free · open source · no sign-up · no API keys</p>
 
-<!-- DEMO VIDEO: replace this comment with the line below, using your link
-<p align="center"><b>▶️ <a href="VIDEO_LINK_HERE">Watch the 2-minute demo</a></b></p>
--->
+<p align="center">
+  <a href="https://vimeo.com/1238303089"><img src=".github/readme/video.jpg" width="640" alt="Watch the 2-minute demo"></a><br>
+  <b>▶️ <a href="https://vimeo.com/1238303089">Watch the 2-minute demo</a></b>
+</p>
 
 ## Check your own site in 2 minutes
 
