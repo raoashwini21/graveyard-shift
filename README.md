@@ -9,6 +9,23 @@ and shows you exactly what's quietly broken and how to fix it.</p>
 
 <p align="center">Free · open source · no sign-up · no API keys</p>
 
+<!-- DEMO VIDEO: replace this comment with the line below, using your link
+<p align="center"><b>▶️ <a href="VIDEO_LINK_HERE">Watch the 2-minute demo</a></b></p>
+-->
+
+## Check your own site in 2 minutes
+
+You need [Node.js](https://nodejs.org) 20 or newer. Then:
+
+```bash
+git clone https://github.com/raoashwini21/graveyard-shift.git
+cd graveyard-shift
+npm install
+npm start
+```
+
+Open **http://localhost:3000**, paste your website, and watch Wisp go to work. Want him to keep checking every week, with nothing to install? [Hire the night watchman](#hire-the-night-watchman).
+
 ![The Graveyard Shift home page](.github/readme/home.jpg)
 
 ## What it finds
